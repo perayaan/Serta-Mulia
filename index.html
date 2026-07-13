@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aesthetic Studio - Robust ZIP Engine Fix</title>
+    <title>Aesthetic Studio - Romantic Newspaper Pack</title>
     <!-- Library untuk membungkus output menjadi berkas ZIP tunggal -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
@@ -30,8 +30,8 @@
         /* Tampilan Koran */
         .newspaper-container { display: none; width: 330px; height: 440px; border: 1px solid #ccc; box-shadow: 2px 2px 8px rgba(0,0,0,0.1); position: relative; overflow: hidden; background: #eee; }
         .newspaper-bg-img { width: 100%; height: 100%; object-fit: contain; position: absolute; top:0; left:0; z-index: 10; pointer-events: none; }
-        .np-slot { position: absolute; z-index: 5; background: #222; overflow: hidden; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold; color: #666; }
-        .np-slot img { width: 100%; height: 100%; object-fit: cover; }
+        .np-slot { position: absolute; z-index: 5; background: #222; overflow: hidden; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .np-slot img { width: 100%; height: 100%; object-fit: cover; } /* Klip murni tanpa scaling distorsi */
         
         /* Tampilan Photo Strip */
         .strip-container { display: none; gap: 0px; }
@@ -53,9 +53,9 @@
 <body>
 
     <div class="pb-window">
-        <div class="pb-titlebar">Aesthetic Hybrid Studio Terminal - Robust Fix</div>
+        <div class="pb-titlebar">Aesthetic Hybrid Studio Terminal - Optimized Layering</div>
         
-        <!-- POP-UP MENU PILIH FRAME -->
+        <!-- POP-UP MENU PILIH MODE -->
         <div id="modeOverlay" class="mode-overlay">
             <div class="mode-title">✨ PILIH JENIS FRAME SYSTEM ✨</div>
             <div class="mode-card-row">
@@ -72,12 +72,13 @@
             </div>
 
             <div class="pb-frame-preview-side">
-                <!-- PANEL MODE NEWSPAPER: FOTO DI BELAKANG FRAME -->
+                <!-- PANEL MODE NEWSPAPER: FOTO DI BELAKANG FRAME DENGAN KALIBRASI UKURAN BARU -->
                 <div id="viewNewspaper" class="newspaper-container">
-                    <div class="np-slot" id="npSlot_0" style="top:37.4%; left:6.3%; width:87.4%; height:30.9%;" onclick="triggerRetakeProcess(0)"></div>
-                    <div class="np-slot" id="npSlot_1" style="top:71.4%; left:63.3%; width:30.4%; height:12.7%;" onclick="triggerRetakeProcess(1)"></div>
-                    <div class="np-slot" id="npSlot_2" style="top:86.6%; left:6.3%; width:26.4%; height:10.5%;" onclick="triggerRetakeProcess(2)"></div>
-                    <img class="newspaper-bg-img" src="PB NEWSPAPER.png" alt="Newspaper Template" onerror="this.style.background='#ddd'; alert('Peringatan: Berkas Gambar PB NEWSPAPER.png gagal dimuat! Pastikan nama file sesuai besar-kecil hurufnya dan diletakkan satu folder dengan file HTML ini.');">
+                    <!-- Ukuran slot diperluas ke bawah & kanan agar clipping dibelakang frame sempurna -->
+                    <div class="np-slot" id="npSlot_0" style="top:37.2%; left:6.0%; width:88.0%; height:32.0%;" onclick="triggerRetakeProcess(0)"></div>
+                    <div class="np-slot" id="npSlot_1" style="top:71.0%; left:63.0%; width:31.5%; height:14.5%;" onclick="triggerRetakeProcess(1)"></div>
+                    <div class="np-slot" id="npSlot_2" style="top:86.2%; left:6.0%; width:28.0%; height:12.0%;" onclick="triggerRetakeProcess(2)"></div>
+                    <img class="newspaper-bg-img" src="PB NEWSPAPER.png" alt="Newspaper Template" onerror="this.style.background='#ddd'; alert('Peringatan: Berkas Gambar PB NEWSPAPER.png tidak ditemukan.');">
                 </div>
 
                 <!-- PANEL MODE PHOTO STRIP -->
@@ -99,7 +100,7 @@
         </div>
 
         <div class="pb-notice-board">
-            💡 KELOLA PACK: Jika tombol unduh diklik, mohon tunggu sebentar hingga status teks berubah kembali. Browser akan memproses rendering animasi klip di background sebelum memunculkan file unduhan .zip.
+            💡 CLIPPING SYSTEM: Hasil foto & video otomatis menggunakan metode klip proporsional tanpa efek penarikan/distorsi paksa.
         </div>
 
         <div class="pb-bottom-controls">
@@ -133,7 +134,7 @@
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 1280, height: 720 }, audio: false });
                 video.srcObject = stream;
             } catch (err) {
-                alert("Akses kamera diblokir atau komponen video hardware tidak terdeteksi.");
+                alert("Akses kamera terganggu.");
             }
         }
 
@@ -303,13 +304,12 @@
         // --- PROTECTED ZIP GENERATOR ENGINE ---
         async function packageAndDownloadZip() {
             try {
-                // Kunci tombol saat memproses render video agar user tidak menekan berkali-kali
                 btnDownload.disabled = true;
                 btnDownload.innerText = "⏳ SEDANG MEMPROSES VIDEO...";
 
                 const zip = new JSZip();
                 
-                // 1. Masukkan Foto Asli Terpisah
+                // 1. Masukkan Foto Asli Terpisah ke ZIP
                 for (let i = 0; i < maxPhotosCount; i++) {
                     if (photosArray[i]) {
                         const base64Data = photosArray[i].split(',')[1];
@@ -320,28 +320,38 @@
                 const exportCanvas = document.createElement('canvas');
                 
                 if(activeAppMode === 'newspaper') {
+                    // Skala Canvas Koran HD Utama
                     exportCanvas.width = 1200;
                     exportCanvas.height = 1600;
                     const ctxNP = exportCanvas.getContext('2d');
 
-                    // LAPISAN 1: Gambar Foto di Posisi Belakang Frame
-                    if(photosArray[0]) ctxNP.drawImage(await loadImageAsync(photosArray[0]), 76, 598, 1048, 494);
-                    if(photosArray[1]) ctxNP.drawImage(await loadImageAsync(photosArray[1]), 760, 1142, 364, 203);
-                    if(photosArray[2]) ctxNP.drawImage(await loadImageAsync(photosArray[2]), 76, 1386, 316, 168);
-
-                    // LAPISAN 2: Tumpuk Frame Koran di Atas
                     let bgImageObj;
                     try {
                         bgImageObj = await loadImageAsync("PB NEWSPAPER.png");
                     } catch(e) {
-                        throw new Error("Berkas template gambar 'PB NEWSPAPER.png' tidak ditemukan di root folder. Pastikan file gambar ada disamping file HTML ini.");
+                        throw new Error("Berkas template gambar 'PB NEWSPAPER.png' tidak dapat ditemukan di server.");
                     }
-                    ctxNP.drawImage(bgImageObj, 0, 0, 1200, 1600);
 
+                    // FUNGSI UTAMA: Draw Layering tanpa melakukan stretching paksa pada foto/video buffer
+                    async function drawNewspaperStaticLayer() {
+                        ctxNP.clearRect(0, 0, 1200, 1600);
+                        // Slot 1 (Gede Atas - Diperlebar ke bawah secara proporsional)
+                        if(photosArray[0]) ctxNP.drawImage(await loadImageAsync(photosArray[0]), 70, 595, 1060, 520);
+                        // Slot 2 (Tengah Kanan - Diperlebar ke bawah secara proporsional)
+                        if(photosArray[1]) ctxNP.drawImage(await loadImageAsync(photosArray[1]), 755, 1135, 380, 240);
+                        // Slot 3 (Bawah Kiri - Diperlebar ke bawah dan ke kanan secara proporsional)
+                        if(photosArray[2]) ctxNP.drawImage(await loadImageAsync(photosArray[2]), 70, 1380, 340, 200);
+                        
+                        // Tumpuk Frame Utama di Atas
+                        ctxNP.drawImage(bgImageObj, 0, 0, 1200, 1600);
+                    }
+
+                    // Buat file PNG lembar cetak statis koran
+                    await drawNewspaperStaticLayer();
                     const npBase64 = exportCanvas.toDataURL('image/png').split(',')[1];
                     zip.file("romantic-newspaper-edition.png", npBase64, {base64: true});
 
-                    // PROSES REKAM VIDEO TIMELINE STRIP NATIVE
+                    // PROSES REKAM LIVE VIDEO TIMELINE STRIP NATIVE
                     const videoStream = exportCanvas.captureStream(15);
                     const chunks = [];
                     const recorder = new MediaRecorder(videoStream, { mimeType: 'video/webm;codecs=vp8', videoBitsPerSecond: 5000000 });
@@ -358,15 +368,17 @@
                     recorder.start();
                     for (let f = 0; f < 50; f++) {
                         ctxNP.clearRect(0, 0, 1200, 1600);
-                        for(let i=0; i<3; i++) {
-                            const frames = videoFramesBuffer[i];
-                            if(frames && frames.length > 0) {
-                                const canvasSrc = frames[f % frames.length];
-                                if(i===0) ctxNP.drawImage(canvasSrc, 76, 598, 1048, 494);
-                                if(i===1) ctxNP.drawImage(canvasSrc, 760, 1142, 364, 203);
-                                if(i===2) ctxNP.drawImage(canvasSrc, 76, 1386, 316, 168);
-                            }
-                        }
+                        
+                        // Render video buffer per frame dibelakang kompilasi kanvas
+                        const f0 = videoFramesBuffer[0];
+                        if(f0 && f0.length > 0) ctxNP.drawImage(f0[f % f0.length], 70, 595, 1060, 520);
+                        
+                        const f1 = videoFramesBuffer[1];
+                        if(f1 && f1.length > 0) ctxNP.drawImage(f1[f % f1.length], 755, 1135, 380, 240);
+                        
+                        const f2 = videoFramesBuffer[2];
+                        if(f2 && f2.length > 0) ctxNP.drawImage(f2[f % f2.length], 70, 1380, 340, 200);
+
                         ctxNP.drawImage(bgImageObj, 0, 0, 1200, 1600);
                         await new Promise(r => setTimeout(r, 65));
                     }
@@ -447,7 +459,6 @@
             } catch (error) {
                 alert("Terjadi Kendala Teknis: " + error.message);
             } finally {
-                // Kembalikan status tombol semula
                 btnDownload.disabled = false;
                 btnDownload.innerText = "🎁 UNDUH ZIP HASIL FOTO & VIDEO";
             }
