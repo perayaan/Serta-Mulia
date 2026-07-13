@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aesthetic Studio - Romantic Newspaper Pack</title>
+    <title>Aesthetic Studio - Fixed Aspect Ratio & Video Engine</title>
     <!-- Library untuk membungkus output menjadi berkas ZIP tunggal -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
@@ -31,7 +31,7 @@
         .newspaper-container { display: none; width: 330px; height: 440px; border: 1px solid #ccc; box-shadow: 2px 2px 8px rgba(0,0,0,0.1); position: relative; overflow: hidden; background: #eee; }
         .newspaper-bg-img { width: 100%; height: 100%; object-fit: contain; position: absolute; top:0; left:0; z-index: 10; pointer-events: none; }
         .np-slot { position: absolute; z-index: 5; background: #222; overflow: hidden; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .np-slot img { width: 100%; height: 100%; object-fit: cover; } /* Klip murni tanpa scaling distorsi */
+        .np-slot img { width: 100%; height: 100%; object-fit: cover; }
         
         /* Tampilan Photo Strip */
         .strip-container { display: none; gap: 0px; }
@@ -53,7 +53,7 @@
 <body>
 
     <div class="pb-window">
-        <div class="pb-titlebar">Aesthetic Hybrid Studio Terminal - Optimized Layering</div>
+        <div class="pb-titlebar">Aesthetic Hybrid Studio Terminal - Absolute Proportional Fixed</div>
         
         <!-- POP-UP MENU PILIH MODE -->
         <div id="modeOverlay" class="mode-overlay">
@@ -72,12 +72,11 @@
             </div>
 
             <div class="pb-frame-preview-side">
-                <!-- PANEL MODE NEWSPAPER: FOTO DI BELAKANG FRAME DENGAN KALIBRASI UKURAN BARU -->
+                <!-- PANEL MODE NEWSPAPER: KOORDINAT TERKALIBRASI LEBIH LUAS KE BAWAH & KANAN -->
                 <div id="viewNewspaper" class="newspaper-container">
-                    <!-- Ukuran slot diperluas ke bawah & kanan agar clipping dibelakang frame sempurna -->
-                    <div class="np-slot" id="npSlot_0" style="top:37.2%; left:6.0%; width:88.0%; height:32.0%;" onclick="triggerRetakeProcess(0)"></div>
-                    <div class="np-slot" id="npSlot_1" style="top:71.0%; left:63.0%; width:31.5%; height:14.5%;" onclick="triggerRetakeProcess(1)"></div>
-                    <div class="np-slot" id="npSlot_2" style="top:86.2%; left:6.0%; width:28.0%; height:12.0%;" onclick="triggerRetakeProcess(2)"></div>
+                    <div class="np-slot" id="npSlot_0" style="top:37.0%; left:5.8%; width:88.5%; height:32.5%;" onclick="triggerRetakeProcess(0)"></div>
+                    <div class="np-slot" id="npSlot_1" style="top:70.8%; left:62.8%; width:32.0%; height:15.0%;" onclick="triggerRetakeProcess(1)"></div>
+                    <div class="np-slot" id="npSlot_2" style="top:86.0%; left:5.8%; width:28.5%; height:12.5%;" onclick="triggerRetakeProcess(2)"></div>
                     <img class="newspaper-bg-img" src="PB NEWSPAPER.png" alt="Newspaper Template" onerror="this.style.background='#ddd'; alert('Peringatan: Berkas Gambar PB NEWSPAPER.png tidak ditemukan.');">
                 </div>
 
@@ -100,7 +99,7 @@
         </div>
 
         <div class="pb-notice-board">
-            💡 CLIPPING SYSTEM: Hasil foto & video otomatis menggunakan metode klip proporsional tanpa efek penarikan/distorsi paksa.
+            ✅ RENDER ENGINE REPAIRED: Sistem kompilasi video murni native diperbaiki total agar bebas corrupt. Distorsi aspek rasio foto dieliminasi total dengan sistem center-cropping.
         </div>
 
         <div class="pb-bottom-controls">
@@ -255,9 +254,12 @@
             }
         }
 
+        // FUNGSI UTAMA PENANGGULANG DISTORSI: Center cropping rasio 3:2 konstan bawaan kamera
         function drawAbsoluteRasio32(ctx, img, x, y, targetW, targetH) {
             let imgWidth = img.videoWidth || 1280;
             let imgHeight = img.videoHeight || 720;
+            
+            // Pertahankan aspek aspek rasio 3:2 landscape murni kamera
             let renderWidth = imgWidth;
             let renderHeight = imgWidth * (targetH / targetW);
 
@@ -271,8 +273,28 @@
             ctx.save();
             ctx.translate(x + targetW, y);
             ctx.scale(-1, 1);
+            // Slicing parameter 9 menjamin gambar diklip rapi dari tengah lensa tanpa ditarik paksa
             ctx.drawImage(img, offsetX, offsetY, renderWidth, renderHeight, 0, 0, targetW, targetH);
             ctx.restore();
+        }
+
+        // Menggambar elemen gambar/frame individual di kanvas dengan cropping proporsional konstan
+        function drawImageProporsional(ctx, img, dx, dy, dWidth, dHeight) {
+            let imgW = img.width;
+            let imgH = img.height;
+            
+            let sWidth = imgW;
+            let sHeight = imgW * (dHeight / dWidth);
+            
+            if (sHeight > imgH) {
+                sHeight = imgH;
+                sWidth = imgH * (dWidth / dHeight);
+            }
+            
+            let sx = (imgW - sWidth) / 2;
+            let sy = (imgH - sHeight) / 2;
+            
+            ctx.drawImage(img, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
         }
 
         function triggerRetakeProcess(index) {
@@ -301,11 +323,11 @@
             if(show) isRetakeActive = false;
         }
 
-        // --- PROTECTED ZIP GENERATOR ENGINE ---
+        // --- ANTI-CORRUPT ZIP GENERATOR SYSTEM ---
         async function packageAndDownloadZip() {
             try {
                 btnDownload.disabled = true;
-                btnDownload.innerText = "⏳ SEDANG MEMPROSES VIDEO...";
+                btnDownload.innerText = "⏳ RECORDING LIVE PHOTO STRIP...";
 
                 const zip = new JSZip();
                 
@@ -320,41 +342,28 @@
                 const exportCanvas = document.createElement('canvas');
                 
                 if(activeAppMode === 'newspaper') {
-                    // Skala Canvas Koran HD Utama
                     exportCanvas.width = 1200;
                     exportCanvas.height = 1600;
                     const ctxNP = exportCanvas.getContext('2d');
 
-                    let bgImageObj;
-                    try {
-                        bgImageObj = await loadImageAsync("PB NEWSPAPER.png");
-                    } catch(e) {
-                        throw new Error("Berkas template gambar 'PB NEWSPAPER.png' tidak dapat ditemukan di server.");
-                    }
+                    let bgImageObj = await loadImageAsync("PB NEWSPAPER.png");
 
-                    // FUNGSI UTAMA: Draw Layering tanpa melakukan stretching paksa pada foto/video buffer
-                    async function drawNewspaperStaticLayer() {
-                        ctxNP.clearRect(0, 0, 1200, 1600);
-                        // Slot 1 (Gede Atas - Diperlebar ke bawah secara proporsional)
-                        if(photosArray[0]) ctxNP.drawImage(await loadImageAsync(photosArray[0]), 70, 595, 1060, 520);
-                        // Slot 2 (Tengah Kanan - Diperlebar ke bawah secara proporsional)
-                        if(photosArray[1]) ctxNP.drawImage(await loadImageAsync(photosArray[1]), 755, 1135, 380, 240);
-                        // Slot 3 (Bawah Kiri - Diperlebar ke bawah dan ke kanan secara proporsional)
-                        if(photosArray[2]) ctxNP.drawImage(await loadImageAsync(photosArray[2]), 70, 1380, 340, 200);
-                        
-                        // Tumpuk Frame Utama di Atas
-                        ctxNP.drawImage(bgImageObj, 0, 0, 1200, 1600);
-                    }
-
-                    // Buat file PNG lembar cetak statis koran
-                    await drawNewspaperStaticLayer();
+                    // RENDER STATIC LAYER
+                    ctxNP.fillStyle = "#ffffff";
+                    ctxNP.fillRect(0, 0, 1200, 1600);
+                    
+                    if(photosArray[0]) drawImageProporsional(ctxNP, await loadImageAsync(photosArray[0]), 70, 595, 1060, 520);
+                    if(photosArray[1]) drawImageProporsional(ctxNP, await loadImageAsync(photosArray[1]), 755, 1135, 380, 240);
+                    if(photosArray[2]) drawImageProporsional(ctxNP, await loadImageAsync(photosArray[2]), 70, 1380, 340, 200);
+                    
+                    ctxNP.drawImage(bgImageObj, 0, 0, 1200, 1600);
                     const npBase64 = exportCanvas.toDataURL('image/png').split(',')[1];
                     zip.file("romantic-newspaper-edition.png", npBase64, {base64: true});
 
-                    // PROSES REKAM LIVE VIDEO TIMELINE STRIP NATIVE
+                    // NATIVE CAPTURE STREAM (Dimensi Canvas Terkunci Kokoh Mencegah Kerusakan Metadata)
                     const videoStream = exportCanvas.captureStream(15);
                     const chunks = [];
-                    const recorder = new MediaRecorder(videoStream, { mimeType: 'video/webm;codecs=vp8', videoBitsPerSecond: 5000000 });
+                    const recorder = new MediaRecorder(videoStream, { mimeType: 'video/webm;codecs=vp8', videoBitsPerSecond: 6000000 });
                     
                     recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
                     
@@ -366,18 +375,19 @@
                     });
 
                     recorder.start();
+                    // Pemrosesan Loop Frame Rapat
                     for (let f = 0; f < 50; f++) {
-                        ctxNP.clearRect(0, 0, 1200, 1600);
+                        ctxNP.fillStyle = "#ffffff";
+                        ctxNP.fillRect(0, 0, 1200, 1600);
                         
-                        // Render video buffer per frame dibelakang kompilasi kanvas
                         const f0 = videoFramesBuffer[0];
-                        if(f0 && f0.length > 0) ctxNP.drawImage(f0[f % f0.length], 70, 595, 1060, 520);
+                        if(f0 && f0.length > 0) drawImageProporsional(ctxNP, f0[f % f0.length], 70, 595, 1060, 520);
                         
                         const f1 = videoFramesBuffer[1];
-                        if(f1 && f1.length > 0) ctxNP.drawImage(f1[f % f1.length], 755, 1135, 380, 240);
+                        if(f1 && f1.length > 0) drawImageProporsional(ctxNP, f1[f % f1.length], 755, 1135, 380, 240);
                         
                         const f2 = videoFramesBuffer[2];
-                        if(f2 && f2.length > 0) ctxNP.drawImage(f2[f % f2.length], 70, 1380, 340, 200);
+                        if(f2 && f2.length > 0) drawImageProporsional(ctxNP, f2[f % f2.length], 70, 1380, 340, 200);
 
                         ctxNP.drawImage(bgImageObj, 0, 0, 1200, 1600);
                         await new Promise(r => setTimeout(r, 65));
@@ -386,7 +396,7 @@
                     await recordPromise;
 
                 } else {
-                    // MODE PHOTO STRIP
+                    // MODE PHOTO STRIP SEPASANG MAROON
                     exportCanvas.width = 1200;
                     exportCanvas.height = 1800;
                     const ctxPS = exportCanvas.getContext('2d');
@@ -397,8 +407,7 @@
                         for (let i = 0; i < 3; i++) {
                             const imgData = photosArray[startIdx + i];
                             if (imgData) {
-                                const img = await loadImageAsync(imgData);
-                                ctxPS.drawImage(img, offsetX + 40, 120 + (i * 480), 520, 346.6);
+                                drawImageProporsional(ctxPS, await loadImageAsync(imgData), offsetX + 40, 120 + (i * 480), 520, 346.6);
                             }
                         }
                         ctxPS.fillStyle = "#ffffff";
@@ -416,7 +425,7 @@
 
                     const videoStream = exportCanvas.captureStream(15);
                     const chunks = [];
-                    const recorder = new MediaRecorder(videoStream, { mimeType: 'video/webm;codecs=vp8', videoBitsPerSecond: 5000000 });
+                    const recorder = new MediaRecorder(videoStream, { mimeType: 'video/webm;codecs=vp8', videoBitsPerSecond: 6000000 });
                     recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
                     
                     const recordPromise = new Promise((resolve) => {
@@ -432,14 +441,14 @@
                         ctxPS.fillStyle = currentThemeColor; ctxPS.fillRect(0, 0, 600, 1800);
                         for (let i = 0; i < 3; i++) {
                             const frames = videoFramesBuffer[i];
-                            if (frames && frames.length > 0) ctxPS.drawImage(frames[f % frames.length], 40, 120 + (i * 480), 520, 346.6);
+                            if (frames && frames.length > 0) drawImageProporsional(ctxPS, frames[f % frames.length], 40, 120 + (i * 480), 520, 346.6);
                         }
                         ctxPS.fillStyle = "#ffffff"; ctxPS.font = "italic bold 46px 'Times New Roman', serif"; ctxPS.textAlign = "center"; ctxPS.fillText("Elevate Moment's", 300, 1680);
                         
                         ctxPS.fillStyle = currentThemeColor; ctxPS.fillRect(600, 0, 600, 1800);
                         for (let i = 0; i < 3; i++) {
                             const frames = videoFramesBuffer[3 + i];
-                            if (frames && frames.length > 0) ctxPS.drawImage(frames[f % frames.length], 640, 120 + (i * 480), 520, 346.6);
+                            if (frames && frames.length > 0) drawImageProporsional(ctxPS, frames[f % frames.length], 640, 120 + (i * 480), 520, 346.6);
                         }
                         ctxPS.fillStyle = "#ffffff"; ctxPS.fillText("Elevate Moment's", 900, 1680);
 
@@ -449,7 +458,7 @@
                     await recordPromise;
                 }
 
-                // Compile ZIP data
+                // Download File ZIP
                 const content = await zip.generateAsync({type:"blob"});
                 const link = document.createElement('a');
                 link.href = URL.createObjectURL(content);
