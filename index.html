@@ -3,32 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aesthetic Photobooth Studio - Native Live Photo Fixed</title>
+    <title>Aesthetic Studio - Fixed Aspect Ratio & Video Engine</title>
     <!-- Library untuk membungkus output menjadi berkas ZIP tunggal -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         body { background: #87CEEB; font-family: 'Courier New', Courier, monospace; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; box-sizing: border-box; }
-        .pb-window { background: #ffffff; border: 4px solid #db939a; box-shadow: 6px 6px 0px rgba(0, 0, 0, 0.15); width: 1220px; max-width: 95vw; display: flex; flex-direction: column; box-sizing: border-box; }
+        .pb-window { background: #ffffff; border: 4px solid #db939a; box-shadow: 6px 6px 0px rgba(0, 0, 0, 0.15); width: 1220px; max-width: 95vw; display: flex; flex-direction: column; box-sizing: border-box; position: relative; }
         .pb-titlebar { background: #ffb3ba; height: 36px; display: flex; align-items: center; padding: 0 12px; border-bottom: 4px solid #db939a; color: #ffffff; font-weight: bold; font-size: 14px; }
         
-        .pb-top-layout { display: flex; padding: 20px; gap: 20px; background: #fff5f6; box-sizing: border-box; }
+        /* POP-UP MENU PILIH MODE */
+        .mode-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.9); z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 30px; }
+        .mode-title { font-size: 24px; font-weight: 900; color: #b56b72; text-shadow: 1px 1px white; }
+        .mode-card-row { display: flex; gap: 30px; }
+        .mode-card { border: 4px solid #db939a; background: #fff5f6; padding: 30px; border-radius: 8px; font-size: 18px; font-weight: bold; color: #b56b72; cursor: pointer; transition: 0.2s; width: 220px; text-align: center; box-shadow: 4px 4px 0px rgba(0,0,0,0.1); }
+        .mode-card:hover { background: #ffe3e6; transform: scale(1.05); }
+
+        /* AUTOMATIC CAMERA OVRERLAY */
+        .camera-block-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); z-index: 200; display: none; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box; }
+        .camera-block-card { background: #ffffff; border: 4px solid #db939a; padding: 25px 40px; border-radius: 8px; text-align: center; box-shadow: 0px 10px 25px rgba(0,0,0,0.2); width: 420px; max-width: 85vw; }
+        .camera-block-card h3 { color: #b56b72; margin-top: 0; font-size: 20px; font-weight: 900; }
+        .camera-block-card p { font-size: 14px; color: #555; font-weight: bold; margin-bottom: 20px; line-height: 1.5; }
+
+        .pb-top-layout { display: flex; padding: 20px; gap: 20px; background: #fff5f6; box-sizing: border-box; min-height: 470px; }
         .pb-camera-box { width: 640px; height: 426.6px; background: #000; border: 3px solid #db939a; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; }
         #pbVideo { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
         #pbCountdown { display: none; position: absolute; font-size: 100px; font-weight: 900; color: white; text-shadow: 0px 0px 15px rgba(0,0,0,0.8); z-index: 10; }
         #pbLiveStatus { position: absolute; top: 15px; left: 15px; background: red; color: white; padding: 4px 10px; font-size: 12px; font-weight: bold; display: none; animation: pulse 1s infinite alternate; }
 
-        .pb-frame-preview-side { flex: 1; background: white; border: 3px solid #ffb3ba; display: flex; align-items: center; justify-content: center; gap: 0px; padding: 15px; box-sizing: border-box; }
-        .pb-strip { width: 240px; height: 440px; padding: 20px 12px 12px 12px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: flex-start; gap: 10px; position: relative; }
+        /* PREVIEW AREA SISI KANAN */
+        .pb-frame-preview-side { flex: 1; background: white; border: 3px solid #ffb3ba; display: flex; align-items: center; justify-content: center; padding: 15px; box-sizing: border-box; position: relative; }
         
-        .pb-slot { width: 100%; height: 110px; background: rgba(255,255,255,0.15); border: 1px dashed rgba(255,255,255,0.4); cursor: pointer; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        /* Tampilan Koran */
+        .newspaper-container { display: none; width: 330px; height: 440px; border: 1px solid #ccc; box-shadow: 2px 2px 8px rgba(0,0,0,0.1); position: relative; overflow: hidden; background: #eee; }
+        .newspaper-bg-img { width: 100%; height: 100%; object-fit: contain; position: absolute; top:0; left:0; z-index: 10; pointer-events: none; }
+        .np-slot { position: absolute; z-index: 5; background: #222; overflow: hidden; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .np-slot img { width: 100%; height: 100%; object-fit: cover; }
+        
+        /* Tampilan Photo Strip */
+        .strip-container { display: none; gap: 0px; }
+        .pb-strip { width: 240px; height: 440px; padding: 20px 12px 12px 12px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: flex-start; gap: 10px; position: relative; }
+        .pb-slot { width: 100%; height: 110px; background: rgba(255,255,255,0.15); border: 1px dashed rgba(255,255,255,0.4); cursor: pointer; overflow: hidden; }
         .pb-slot img { width: 100%; height: 100%; object-fit: cover; }
-        .pb-slot.retake-active { border: 2px solid #fff !important; box-shadow: 0 0 8px #fff; }
-        .pb-strip-footer { font-size: 13px; color: white; text-align: center; font-style: italic; margin-top: auto; font-family: 'Times New Roman', serif; letter-spacing: 1px; }
+        .pb-strip-footer { font-size: 13px; color: white; text-align: center; font-style: italic; margin-top: auto; font-family: 'Times New Roman', serif; }
 
+        .retake-active { border: 2px solid #ff0000 !important; box-shadow: 0 0 8px #ff0000; z-index: 12 !important; }
         .pb-notice-board { padding: 10px 20px; background: #fffdf5; border-top: 2px dashed #ffb3ba; border-bottom: 3px solid #db939a; font-size: 11px; font-weight: bold; color: #b56b72; }
         .pb-bottom-controls { padding: 15px; background: white; display: flex; flex-direction: column; gap: 12px; align-items: center; }
         .pb-row-buttons { display: flex; gap: 10px; justify-content: center; width: 100%; flex-wrap: wrap; }
         .pb-btn { background: #ffb3ba; color: white; border: 3px solid #db939a; padding: 8px 18px; font-family: inherit; font-weight: bold; font-size: 12px; cursor: pointer; box-shadow: 2px 2px 0px rgba(0,0,0,0.1); text-transform: uppercase; }
+        .pb-btn:disabled { background: #ccc !important; border-color: #aaa !important; cursor: not-allowed; }
 
         @keyframes pulse { from { opacity: 0.5; } to { opacity: 1; } }
     </style>
@@ -36,45 +59,68 @@
 <body>
 
     <div class="pb-window">
-        <div class="pb-titlebar">Premium Photobooth Studio - Corrupted Live Photo Fix Update</div>
+        <div class="pb-titlebar">Aesthetic Hybrid Studio Terminal - Absolute Proportional Fixed</div>
         
+        <!-- POP-UP OTOMATIS JIKA KAMERA BELUM DIIZINKAN -->
+        <div id="cameraLockOverlay" class="camera-block-overlay">
+            <div class="camera-block-card">
+                <h3>⚠️ AKSES DIBLOKIR</h3>
+                <p>Harap izinkan akses kamera pada browser Anda untuk dapat menggunakan photobooth ini.</p>
+                <button class="pb-btn" style="background: #9cdb93; border-color: #72b56b;" onclick="retryCameraPermission()">🔄 COBA LAGI</button>
+            </div>
+        </div>
+
+        <!-- POP-UP MENU PILIH MODE -->
+        <div id="modeOverlay" class="mode-overlay">
+            <div class="mode-title">✨ PILIH JENIS FRAME SYSTEM ✨</div>
+            <div class="mode-card-row">
+                <div class="mode-card" onclick="selectAppMode('newspaper')">📰 NEWSPAPER<br><span style="font-size:11px;font-weight:normal;">Romantic News Edition</span></div>
+                <div class="mode-card" onclick="selectAppMode('photostrip')">📸 PHOTO STRIP<br><span style="font-size:11px;font-weight:normal;">Classic 2-Strip Pack</span></div>
+            </div>
+        </div>
+
         <div class="pb-top-layout">
             <div class="pb-camera-box">
-                <div id="pbLiveStatus">● REC 5s VIDEO BUFFER</div>
+                <div id="pbLiveStatus">● REC VIDEO (5s BUFFER)</div>
                 <div id="pbCountdown">5</div>
                 <video id="pbVideo" autoplay playsinline></video>
             </div>
 
             <div class="pb-frame-preview-side">
-                <div id="stripLeft" class="pb-strip" style="background: #4A1519;">
-                    <div class="pb-slot" id="slot_0" onclick="triggerRetakeProcess(0)">Bingkai 1</div>
-                    <div class="pb-slot" id="slot_1" onclick="triggerRetakeProcess(1)">Bingkai 2</div>
-                    <div class="pb-slot" id="slot_2" onclick="triggerRetakeProcess(2)">Bingkai 3</div>
-                    <div class="pb-strip-footer">Elevate Moment's</div>
+                <!-- PANEL MODE NEWSPAPER -->
+                <div id="viewNewspaper" class="newspaper-container">
+                    <div class="np-slot" id="npSlot_0" style="top:37.0%; left:5.8%; width:88.5%; height:32.5%;" onclick="triggerRetakeProcess(0)"></div>
+                    <div class="np-slot" id="npSlot_1" style="top:70.8%; left:62.8%; width:32.0%; height:15.0%;" onclick="triggerRetakeProcess(1)"></div>
+                    <div class="np-slot" id="npSlot_2" style="top:86.0%; left:5.8%; width:28.5%; height:12.5%;" onclick="triggerRetakeProcess(2)"></div>
+                    <img class="newspaper-bg-img" src="PB NEWSPAPER.png" alt="Newspaper Template" onerror="this.style.background='#ddd'; alert('Peringatan: Berkas Gambar PB NEWSPAPER.png tidak ditemukan.');">
                 </div>
-                <div id="stripRight" class="pb-strip" style="background: #4A1519;">
-                    <div class="pb-slot" id="slot_3" onclick="triggerRetakeProcess(3)">Bingkai 4</div>
-                    <div class="pb-slot" id="slot_4" onclick="triggerRetakeProcess(4)">Bingkai 5</div>
-                    <div class="pb-slot" id="slot_5" onclick="triggerRetakeProcess(5)">Bingkai 6</div>
-                    <div class="pb-strip-footer">Elevate Moment's</div>
+
+                <!-- PANEL MODE PHOTO STRIP -->
+                <div id="viewPhotoStrip" class="strip-container">
+                    <div id="stripLeft" class="pb-strip" style="background: #4A1519;">
+                        <div class="pb-slot" id="slot_0" onclick="triggerRetakeProcess(0)"></div>
+                        <div class="pb-slot" id="slot_1" onclick="triggerRetakeProcess(1)"></div>
+                        <div class="pb-slot" id="slot_2" onclick="triggerRetakeProcess(2)"></div>
+                        <div class="pb-strip-footer">Elevate Moment's</div>
+                    </div>
+                    <div id="stripRight" class="pb-strip" style="background: #4A1519;">
+                        <div class="pb-slot" id="slot_3" onclick="triggerRetakeProcess(3)"></div>
+                        <div class="pb-slot" id="slot_4" onclick="triggerRetakeProcess(4)"></div>
+                        <div class="pb-slot" id="slot_5" onclick="triggerRetakeProcess(5)"></div>
+                        <div class="pb-strip-footer">Elevate Moment's</div>
+                    </div>
                 </div>
             </div>
         </div>
 
         <div class="pb-notice-board">
-            ✅ UPDATE FIX: Foto di web preview tetap **statis (diam)**. File video *Live Photo* gabungan sepasang strip di dalam ZIP dijamin stabil, beresolusi tajam, dan tidak akan corrupt saat diputar.
+            ✅ RENDER ENGINE REPAIRED: Sistem kompilasi video murni native diperbaiki total agar bebas corrupt. Distorsi aspek rasio foto dieliminasi total dengan sistem center-cropping.
         </div>
 
         <div class="pb-bottom-controls">
             <div class="pb-row-buttons">
-                <span style="font-size:12px; font-weight:bold; color:#b56b72; align-self:center; margin-right:5px;">PILIHAN WARNA TEMA:</span>
-                <button class="pb-btn" onclick="setThemeStyle('#4A1519')">Maroon Elegant</button>
-                <button class="pb-btn" onclick="setThemeStyle('#15224A')">Deep Navy</button>
-                <button class="pb-btn" onclick="setThemeStyle('#1C1C1C')">Charcoal Black</button>
-            </div>
-            
-            <div class="pb-row-buttons" style="border-top:1px dashed #ffb3ba; padding-top:12px; width:100%;">
-                <button id="btnActionStart" class="pb-btn" style="background: #9cdb93; border-color: #72b56b;" onclick="startPhotoboothSequence()">MULAI SESI FOTO (6 JEPRETAN)</button>
+                <button id="btnActionStart" class="pb-btn" style="background: #9cdb93; border-color: #72b56b;" onclick="startSutterSequence()">📸 TAKE (MULAI FOTO)</button>
+                <button id="btnActionChange" class="pb-btn" style="background: #e2c074; border-color: #bfa35a;" onclick="backToMenuOverlay()">🔄 PILIH FRAME LAIN</button>
                 <button id="btnActionDownload" class="pb-btn" style="background: #93b5db; border-color: #6b8cb5; display: none;" onclick="packageAndDownloadZip()">🎁 UNDUH ZIP HASIL FOTO & VIDEO</button>
             </div>
         </div>
@@ -84,46 +130,82 @@
         const video = document.getElementById('pbVideo');
         const countdownEl = document.getElementById('pbCountdown');
         const statusEl = document.getElementById('pbLiveStatus');
+        const btnDownload = document.getElementById('btnActionDownload');
+        const cameraLockOverlay = document.getElementById('cameraLockOverlay');
         
+        let activeAppMode = 'newspaper';
         let currentThemeColor = '#4A1519';
-        let photosArray = [null, null, null, null, null, null];
-        
-        // Menyimpan array berisi data canvas untuk dirender ulang saat kompilasi video akhir
-        let videoFramesBuffer = [[], [], [], [], [], []]; 
+        let photosArray = [];
+        let videoFramesBuffer = []; 
         
         let canvasRenderInterval = null;
         let currentIndex = 0;
+        let maxPhotosCount = 3;
         let isRetakeActive = false;
         let retakeTargetIdx = null;
 
-        async function initCameraStream() {
+        // FUNGSI CEK PENGATURAN KAMERA NYAMAN & OTOMATIS
+        async function initCamera() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 1280, height: 720 }, audio: false });
                 video.srcObject = stream;
+                cameraLockOverlay.style.display = 'none'; // Sembunyikan otomatis jika sudah diizinkan
             } catch (err) {
-                alert("Gagal memuat kamera. Pastikan izin akses aktif.");
+                console.warn("Akses kamera ditolak oleh user/browser.");
+                cameraLockOverlay.style.display = 'flex'; // Munculkan pop-up jika belum diizinkan
             }
         }
 
-        function setThemeStyle(color) {
-            currentThemeColor = color;
-            document.getElementById('stripLeft').style.backgroundColor = color;
-            document.getElementById('stripRight').style.backgroundColor = color;
+        function retryCameraPermission() {
+            initCamera();
         }
 
-        function startPhotoboothSequence() {
-            document.getElementById('btnActionStart').style.display = 'none';
-            document.getElementById('btnActionDownload').style.display = 'none';
+        function selectAppMode(mode) {
+            activeAppMode = mode;
+            document.getElementById('modeOverlay').style.display = 'none';
             
-            photosArray = [null, null, null, null, null, null];
-            videoFramesBuffer = [[], [], [], [], [], []];
+            const npView = document.getElementById('viewNewspaper');
+            const psView = document.getElementById('viewPhotoStrip');
+            
+            if(mode === 'newspaper') {
+                npView.style.display = 'block';
+                psView.style.display = 'none';
+                maxPhotosCount = 3;
+            } else {
+                npView.style.display = 'none';
+                psView.style.display = 'flex';
+                maxPhotosCount = 6;
+            }
+            resetWorkspace();
+        }
+
+        function backToMenuOverlay() {
+            document.getElementById('modeOverlay').style.display = 'flex';
+            clearInterval(canvasRenderInterval);
+        }
+
+        function resetWorkspace() {
+            photosArray = new Array(maxPhotosCount).fill(null);
+            videoFramesBuffer = Array.from({length: maxPhotosCount}, () => []);
+            
+            btnDownload.style.display = 'none';
+            btnDownload.innerText = "🎁 UNDUH ZIP HASIL FOTO & VIDEO";
+            btnDownload.disabled = false;
+            document.getElementById('btnActionStart').style.display = 'inline-block';
             
             for(let i=0; i<6; i++) {
-                const slot = document.getElementById(`slot_${i}`);
-                slot.innerHTML = `Bingkai ${i+1}`;
-                slot.classList.remove('retake-active');
+                let slot = document.getElementById(`slot_${i}`);
+                if(slot) { slot.innerHTML = ''; slot.classList.remove('retake-active'); }
             }
-            
+            for(let i=0; i<3; i++) {
+                let npSlot = document.getElementById(`npSlot_${i}`);
+                if(npSlot) { npSlot.innerHTML = ''; npSlot.classList.remove('retake-active'); }
+            }
+        }
+
+        function startSutterSequence() {
+            resetWorkspace();
+            document.getElementById('btnActionStart').style.display = 'none';
             currentIndex = 0;
             isRetakeActive = false;
             executeCountdownCycle();
@@ -138,13 +220,11 @@
             const activeIdx = isRetakeActive ? retakeTargetIdx : currentIndex;
             videoFramesBuffer[activeIdx] = [];
 
-            // Rekam frame-by-frame dengan rasio mutlak 3:2 ke memori buffer selama 5 detik countdown
             canvasRenderInterval = setInterval(() => {
                 const frameCanvas = document.createElement('canvas');
                 frameCanvas.width = 600;
                 frameCanvas.height = 400;
                 const fCtx = frameCanvas.getContext('2d');
-                
                 drawAbsoluteRasio32(fCtx, video, 0, 0, 600, 400);
                 videoFramesBuffer[activeIdx].push(frameCanvas);
             }, 100); 
@@ -166,31 +246,34 @@
         function finalizeCapture() {
             const activeIdx = isRetakeActive ? retakeTargetIdx : currentIndex;
 
-            // Snapshot resolusi tinggi mutlak 2400 x 1600 (3:2)
             const tempCanvas = document.createElement('canvas');
             tempCanvas.width = 2400;
             tempCanvas.height = 1600;
             const tCtx = tempCanvas.getContext('2d');
-            
             drawAbsoluteRasio32(tCtx, video, 0, 0, 2400, 1600);
             const dataUri = tempCanvas.toDataURL('image/png');
 
             photosArray[activeIdx] = dataUri;
             
-            // Tampilan di web preview dipastikan tetap FOTO STATIS (diam) biasa
-            const slot = document.getElementById(`slot_${activeIdx}`);
-            slot.innerHTML = `<img src="${dataUri}" />`;
-            slot.classList.remove('retake-active');
+            if(activeAppMode === 'newspaper') {
+                const slot = document.getElementById(`npSlot_${activeIdx}`);
+                slot.innerHTML = `<img src="${dataUri}" />`;
+                slot.classList.remove('retake-active');
+            } else {
+                const slot = document.getElementById(`slot_${activeIdx}`);
+                slot.innerHTML = `<img src="${dataUri}" />`;
+                slot.classList.remove('retake-active');
+            }
 
             if(!isRetakeActive) {
                 currentIndex++;
-                if (currentIndex < 6) {
+                if (currentIndex < maxPhotosCount) {
                     executeCountdownCycle();
                 } else {
-                    toggleControlButtons(true);
+                    toggleControls(true);
                 }
             } else {
-                toggleControlButtons(true);
+                toggleControls(true);
             }
         }
 
@@ -205,7 +288,6 @@
                 renderHeight = imgHeight;
                 renderWidth = imgHeight * (targetW / targetH);
             }
-
             let offsetX = (imgWidth - renderWidth) / 2;
             let offsetY = (imgHeight - renderHeight) / 2;
 
@@ -216,156 +298,203 @@
             ctx.restore();
         }
 
+        function drawImageProporsional(ctx, img, dx, dy, dWidth, dHeight) {
+            let imgW = img.width;
+            let imgH = img.height;
+            
+            let sWidth = imgW;
+            let sHeight = imgW * (dHeight / dWidth);
+            
+            if (sHeight > imgH) {
+                sHeight = imgH;
+                sWidth = imgH * (dWidth / dHeight);
+            }
+            
+            let sx = (imgW - sWidth) / 2;
+            let sy = (imgH - sHeight) / 2;
+            
+            ctx.drawImage(img, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
+        }
+
         function triggerRetakeProcess(index) {
             if (photosArray.includes(null) && !isRetakeActive) return;
 
-            for(let i=0; i<6; i++) document.getElementById(`slot_${i}`).classList.remove('retake-active');
+            for(let i=0; i<6; i++) {
+                let s = document.getElementById(`slot_${i}`); if(s) s.classList.remove('retake-active');
+            }
+            for(let i=0; i<3; i++) {
+                let s = document.getElementById(`npSlot_${i}`); if(s) s.classList.remove('retake-active');
+            }
 
             isRetakeActive = true;
             retakeTargetIdx = index;
-            document.getElementById(`slot_${index}`).classList.add('retake-active');
-            toggleControlButtons(false);
-
+            
+            const elementId = (activeAppMode === 'newspaper') ? `npSlot_${index}` : `slot_${index}`;
+            document.getElementById(elementId).classList.add('retake-active');
+            
+            toggleControls(false);
             executeCountdownCycle();
         }
 
-        function toggleControlButtons(show) {
+        function toggleControls(show) {
             document.getElementById('btnActionStart').style.display = show ? 'inline-block' : 'none';
-            document.getElementById('btnActionDownload').style.display = show ? 'inline-block' : 'none';
+            btnDownload.style.display = show ? 'inline-block' : 'none';
             if(show) isRetakeActive = false;
         }
 
-        // FUNGSI ANDALAN: KOMPILASI NATIVE MEDIARECORDER MENCEGAH VIDEO CORRUPT
         async function packageAndDownloadZip() {
-            const zip = new JSZip();
-            
-            // 1. Masukkan 6 Foto Asli Landscape (2400 x 1600) ke ZIP
-            for (let i = 0; i < 6; i++) {
-                if (photosArray[i]) {
-                    const base64Data = photosArray[i].split(',')[1];
-                    zip.file(`foto-asli-2400x1600-bingkai-${i+1}.png`, base64Data, {base64: true});
-                }
-            }
+            try {
+                btnDownload.disabled = true;
+                btnDownload.innerText = "⏳ SEDANG MEMPROSES VIDEO...";
 
-            // 2. Masukkan 1 Cetakan Sepasang Strip Statis HD (1200 x 1800) Rapat Tanpa Celah
-            const exportCanvas = document.createElement('canvas');
-            exportCanvas.width = 1200;
-            exportCanvas.height = 1800;
-            const ctxExport = exportCanvas.getContext('2d');
-
-            ctxExport.fillStyle = "#ffffff";
-            ctxExport.fillRect(0, 0, 1200, 1800);
-
-            async function drawStripHD(offsetX, startIdx) {
-                ctxExport.fillStyle = currentThemeColor;
-                ctxExport.fillRect(offsetX, 0, 600, 1800);
-
-                for (let i = 0; i < 3; i++) {
-                    const imgData = photosArray[startIdx + i];
-                    if (imgData) {
-                        const img = await loadImageAsync(imgData);
-                        ctxExport.drawImage(img, offsetX + 40, 120 + (i * 480), 520, 346.6);
-                    }
-                }
+                const zip = new JSZip();
                 
-                ctxExport.fillStyle = "#ffffff";
-                ctxExport.font = "italic bold 46px 'Times New Roman', serif";
-                ctxExport.textAlign = "center";
-                ctxExport.fillText("Elevate Moment's", offsetX + 300, 1680);
-            }
-
-            await drawStripHD(0, 0);
-            await drawStripHD(600, 3);
-
-            const combinedBase64 = exportCanvas.toDataURL('image/png').split(',')[1];
-            zip.file("combined-frame-1200x1800.png", combinedBase64, {base64: true});
-
-            // 3. NATIVE RECORDER SYSTEM: Merajut Video Lembar Cetak Bergerak Serempak
-            const videoCanvas = document.createElement('canvas');
-            videoCanvas.width = 1200;
-            videoCanvas.height = 1800;
-            const vCtx = videoCanvas.getContext('2d');
-
-            // Tangkap stream asli dari canvas dengan frame rate 15 FPS konstan
-            const videoStream = videoCanvas.captureStream(15);
-            const chunks = [];
-            
-            // Set Bitrate tinggi (5 Mbps) agar kompresi tajam, halus, dan kontainer terenkripsi valid
-            const recorder = new MediaRecorder(videoStream, { 
-                mimeType: 'video/webm;codecs=vp8',
-                videoBitsPerSecond: 5000000 
-            });
-
-            recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
-            
-            const recordPromise = new Promise((resolve) => {
-                recorder.onstop = () => {
-                    const videoBlob = new Blob(chunks, { type: 'video/webm' });
-                    zip.file("live-photobooth-strip-frame.webm", videoBlob);
-                    resolve();
-                };
-            });
-
-            recorder.start();
-
-            // Lakukan render loop sebanyak 50 frame (~5 detik video berjalan stabil)
-            for (let f = 0; f < 50; f++) {
-                vCtx.fillStyle = "#ffffff";
-                vCtx.fillRect(0, 0, 1200, 1800);
-
-                // Sisi Strip Kiri
-                vCtx.fillStyle = currentThemeColor;
-                vCtx.fillRect(0, 0, 600, 1800);
-                for (let i = 0; i < 3; i++) {
-                    const frames = videoFramesBuffer[i];
-                    if (frames && frames.length > 0) {
-                        const sourceCanvas = frames[f % frames.length];
-                        vCtx.drawImage(sourceCanvas, 40, 120 + (i * 480), 520, 346.6);
+                for (let i = 0; i < maxPhotosCount; i++) {
+                    if (photosArray[i]) {
+                        const base64Data = photosArray[i].split(',')[1];
+                        zip.file(`foto-asli-2400x1600-bingkai-${i+1}.png`, base64Data, {base64: true});
                     }
                 }
-                vCtx.fillStyle = "#ffffff";
-                vCtx.font = "italic bold 46px 'Times New Roman', serif";
-                vCtx.textAlign = "center";
-                vCtx.fillText("Elevate Moment's", 300, 1680);
 
-                // Sisi Strip Kanan
-                vCtx.fillStyle = currentThemeColor;
-                vCtx.fillRect(600, 0, 600, 1800);
-                for (let i = 0; i < 3; i++) {
-                    const frames = videoFramesBuffer[3 + i];
-                    if (frames && frames.length > 0) {
-                        const sourceCanvas = frames[f % frames.length];
-                        vCtx.drawImage(sourceCanvas, 640, 120 + (i * 480), 520, 346.6);
+                const exportCanvas = document.createElement('canvas');
+                
+                if(activeAppMode === 'newspaper') {
+                    exportCanvas.width = 1200;
+                    exportCanvas.height = 1600;
+                    const ctxNP = exportCanvas.getContext('2d');
+
+                    let bgImageObj = await loadImageAsync("PB NEWSPAPER.png");
+
+                    ctxNP.fillStyle = "#ffffff";
+                    ctxNP.fillRect(0, 0, 1200, 1600);
+                    
+                    if(photosArray[0]) drawImageProporsional(ctxNP, await loadImageAsync(photosArray[0]), 70, 595, 1060, 520);
+                    if(photosArray[1]) drawImageProporsional(ctxNP, await loadImageAsync(photosArray[1]), 755, 1135, 380, 240);
+                    if(photosArray[2]) drawImageProporsional(ctxNP, await loadImageAsync(photosArray[2]), 70, 1380, 340, 200);
+                    
+                    ctxNP.drawImage(bgImageObj, 0, 0, 1200, 1600);
+                    const npBase64 = exportCanvas.toDataURL('image/png').split(',')[1];
+                    zip.file("romantic-newspaper-edition.png", npBase64, {base64: true});
+
+                    const videoStream = exportCanvas.captureStream(15);
+                    const chunks = [];
+                    const recorder = new MediaRecorder(videoStream, { mimeType: 'video/webm;codecs=vp8', videoBitsPerSecond: 6000000 });
+                    
+                    recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+                    
+                    const recordPromise = new Promise((resolve) => {
+                        recorder.onstop = () => {
+                            zip.file("live-newspaper-animation.webm", new Blob(chunks, { type: 'video/webm' }));
+                            resolve();
+                        };
+                    });
+
+                    recorder.start();
+                    for (let f = 0; f < 50; f++) {
+                        ctxNP.fillStyle = "#ffffff";
+                        ctxNP.fillRect(0, 0, 1200, 1600);
+                        
+                        const f0 = videoFramesBuffer[0];
+                        if(f0 && f0.length > 0) drawImageProporsional(ctxNP, f0[f % f0.length], 70, 595, 1060, 520);
+                        
+                        const f1 = videoFramesBuffer[1];
+                        if(f1 && f1.length > 0) drawImageProporsional(ctxNP, f1[f % f1.length], 755, 1135, 380, 240);
+                        
+                        const f2 = videoFramesBuffer[2];
+                        if(f2 && f2.length > 0) drawImageProporsional(ctxNP, f2[f % f2.length], 70, 1380, 340, 200);
+
+                        ctxNP.drawImage(bgImageObj, 0, 0, 1200, 1600);
+                        await new Promise(r => setTimeout(r, 65));
                     }
+                    recorder.stop();
+                    await recordPromise;
+
+                } else {
+                    exportCanvas.width = 1200;
+                    exportCanvas.height = 1800;
+                    const ctxPS = exportCanvas.getContext('2d');
+
+                    async function drawStrip(offsetX, startIdx) {
+                        ctxPS.fillStyle = currentThemeColor;
+                        ctxPS.fillRect(offsetX, 0, 600, 1800);
+                        for (let i = 0; i < 3; i++) {
+                            const imgData = photosArray[startIdx + i];
+                            if (imgData) {
+                                drawImageProporsional(ctxPS, await loadImageAsync(imgData), offsetX + 40, 120 + (i * 480), 520, 346.6);
+                            }
+                        }
+                        ctxPS.fillStyle = "#ffffff";
+                        ctxPS.font = "italic bold 46px 'Times New Roman', serif";
+                        ctxPS.textAlign = "center";
+                        ctxPS.fillText("Elevate Moment's", offsetX + 300, 1680);
+                    }
+
+                    ctxPS.fillStyle = "#ffffff"; ctxPS.fillRect(0, 0, 1200, 1800);
+                    await drawStrip(0, 0);
+                    await drawStrip(600, 3);
+
+                    const psBase64 = exportCanvas.toDataURL('image/png').split(',')[1];
+                    zip.file("combined-photo-strip-1200x1800.png", psBase64, {base64: true});
+
+                    const videoStream = exportCanvas.captureStream(15);
+                    const chunks = [];
+                    const recorder = new MediaRecorder(videoStream, { mimeType: 'video/webm;codecs=vp8', videoBitsPerSecond: 6000000 });
+                    recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+                    
+                    const recordPromise = new Promise((resolve) => {
+                        recorder.onstop = () => {
+                            zip.file("live-photobooth-strip-frame.webm", new Blob(chunks, { type: 'video/webm' }));
+                            resolve();
+                        };
+                    });
+
+                    recorder.start();
+                    for (let f = 0; f < 50; f++) {
+                        ctxPS.fillStyle = "#ffffff"; ctxPS.fillRect(0, 0, 1200, 1800);
+                        ctxPS.fillStyle = currentThemeColor; ctxPS.fillRect(0, 0, 600, 1800);
+                        for (let i = 0; i < 3; i++) {
+                            const frames = videoFramesBuffer[i];
+                            if (frames && frames.length > 0) drawImageProporsional(ctxPS, frames[f % frames.length], 40, 120 + (i * 480), 520, 346.6);
+                        }
+                        ctxPS.fillStyle = "#ffffff"; ctxPS.font = "italic bold 46px 'Times New Roman', serif"; ctxPS.textAlign = "center"; ctxPS.fillText("Elevate Moment's", 300, 1680);
+                        
+                        ctxPS.fillStyle = currentThemeColor; ctxPS.fillRect(600, 0, 600, 1800);
+                        for (let i = 0; i < 3; i++) {
+                            const frames = videoFramesBuffer[3 + i];
+                            if (frames && frames.length > 0) drawImageProporsional(ctxPS, frames[f % frames.length], 640, 120 + (i * 480), 520, 346.6);
+                        }
+                        ctxPS.fillStyle = "#ffffff"; ctxPS.fillText("Elevate Moment's", 900, 1680);
+
+                        await new Promise(r => setTimeout(r, 65));
+                    }
+                    recorder.stop();
+                    await recordPromise;
                 }
-                vCtx.fillStyle = "#ffffff";
-                vCtx.fillText("Elevate Moment's", 900, 1680);
 
-                // Berikan jeda waktu tunggu agar MediaRecorder sempat menangkap buffer frame canvas secara mulus
-                await new Promise(r => setTimeout(r, 65));
-            }
-
-            recorder.stop();
-            await recordPromise;
-
-            // Unduh Berkas ZIP Hasil Akhir
-            zip.generateAsync({type:"blob"}).then(function(content) {
+                const content = await zip.generateAsync({type:"blob"});
                 const link = document.createElement('a');
                 link.href = URL.createObjectURL(content);
-                link.download = "photobooth-absolute-pack.zip";
+                link.download = `photobooth-${activeAppMode}-pack.zip`;
                 link.click();
-            });
+
+            } catch (error) {
+                alert("Terjadi Kendala Teknis: " + error.message);
+            } finally {
+                btnDownload.disabled = false;
+                btnDownload.innerText = "🎁 UNDUH ZIP HASIL FOTO & VIDEO";
+            }
         }
 
         function loadImageAsync(src) {
-            return new Promise((resolve) => {
+            return new Promise((resolve, reject) => {
                 const img = new Image();
                 img.onload = () => resolve(img);
+                img.onerror = () => reject(new Error("Gagal me-load berkas gambar di path: " + src));
                 img.src = src;
             });
         }
 
-        window.onload = initCameraStream;
+        window.onload = initCamera;
     </script>
 </body>
 </html>
