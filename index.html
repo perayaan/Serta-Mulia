@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aesthetic Studio - Master Proportional Balanced</title>
-    <!-- Library untuk membungkus output menjadi berkas ZIP tunggal -->
+    <title>Aesthetic Studio - Master Proportional 16:9 Balanced</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         body { background: #87CEEB; font-family: 'Courier New', Courier, monospace; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; box-sizing: border-box; }
@@ -32,8 +31,8 @@
         /* SISI KIRI STACK KONTROL KAMERA */
         .pb-left-stack { width: 680px; display: flex; flex-direction: column; gap: 20px; justify-content: space-between; }
         
-        /* LIVE VIEW KAMERA INDEPENDEN RASIO FOTO LANDSCAPE (3:2 BERBASIS TINGGI PROPORSI) */
-        .pb-camera-box { width: 680px; height: 453.3px; background: #000; border: 3px solid #db939a; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; box-sizing: border-box; }
+        /* LIVE VIEW KAMERA INDEPENDEN RASIO FOTO LANDSCAPE 16:9 AKURAT */
+        .pb-camera-box { width: 680px; height: 382.5px; background: #000; border: 3px solid #db939a; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; box-sizing: border-box; }
         #pbVideo { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
         #pbCountdown { display: none; position: absolute; font-size: 100px; font-weight: 900; color: white; text-shadow: 0px 0px 15px rgba(0,0,0,0.8); z-index: 10; }
         #pbLiveStatus { position: absolute; top: 15px; left: 15px; background: red; color: white; padding: 4px 10px; font-size: 11px; font-weight: bold; display: none; animation: pulse 1s infinite alternate; }
@@ -41,21 +40,21 @@
         /* SINGLE PANDUAN PADA ALAS BAWAH PREVIEW KAMERA */
         .pb-notice-board { background: #fffdf5; border: 2px dashed #ffb3ba; font-size: 11px; font-weight: bold; color: #b56b72; padding: 12px 18px; line-height: 1.5; border-radius: 6px; box-sizing: border-box; text-align: left; }
 
-        /* SISI KANAN PANEL FRAME (Otomatis mengisi ruang sisa dan meluruskan tingginya ke bawah) */
+        /* SISI KANAN PANEL FRAME (Otomatis menyesuaikan tinggi mengikuti gabungan kamera + panduan kiri secara fleksibel) */
         .pb-right-frame-display { flex: 1; background: white; border: 3px solid #ffb3ba; display: flex; align-items: center; justify-content: center; padding: 15px; box-sizing: border-box; }
         
         /* Tampilan Koran (Rasio dioptimalkan mengikuti tinggi kontainer utama) */
-        .newspaper-container { display: none; width: 390px; height: 520px; border: 1px solid #ccc; box-shadow: 2px 2px 8px rgba(0,0,0,0.1); position: relative; overflow: hidden; background: #eee; }
+        .newspaper-container { display: none; width: 345px; height: 460px; border: 1px solid #ccc; box-shadow: 2px 2px 8px rgba(0,0,0,0.1); position: relative; overflow: hidden; background: #eee; }
         .newspaper-bg-img { width: 100%; height: 100%; object-fit: contain; position: absolute; top:0; left:0; z-index: 10; pointer-events: none; }
         .np-slot { position: absolute; z-index: 5; background: #222; overflow: hidden; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .np-slot img { width: 100%; height: 100%; object-fit: cover; }
         
         /* Tampilan Photo Strip */
-        .strip-container { display: none; gap: 10px; height: 520px; align-items: center; justify-content: center; }
-        .pb-strip { width: 200px; height: 520px; padding: 25px 12px 12px 12px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: flex-start; gap: 10px; position: relative; }
-        .pb-slot { width: 100%; height: 125px; background: rgba(255,255,255,0.15); border: 1px dashed rgba(255,255,255,0.4); cursor: pointer; overflow: hidden; }
+        .strip-container { display: none; gap: 10px; height: 460px; align-items: center; justify-content: center; }
+        .pb-strip { width: 175px; height: 460px; padding: 22px 10px 10px 10px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: flex-start; gap: 8px; position: relative; }
+        .pb-slot { width: 100%; height: 110px; background: rgba(255,255,255,0.15); border: 1px dashed rgba(255,255,255,0.4); cursor: pointer; overflow: hidden; }
         .pb-slot img { width: 100%; height: 100%; object-fit: cover; }
-        .pb-strip-footer { font-size: 12px; color: white; text-align: center; font-style: italic; margin-top: auto; font-family: 'Times New Roman', serif; }
+        .pb-strip-footer { font-size: 11px; color: white; text-align: center; font-style: italic; margin-top: auto; font-family: 'Times New Roman', serif; }
 
         .retake-active { border: 2px solid #ff0000 !important; box-shadow: 0 0 8px #ff0000; z-index: 12 !important; }
 
@@ -73,7 +72,6 @@
     <div class="pb-window">
         <div class="pb-titlebar">Aesthetic Hybrid Studio Terminal - Horizon Proportional Fixed</div>
         
-        <!-- POP-UP OTOMATIS JIKA KAMERA BELUM DIIZINKAN -->
         <div id="cameraLockOverlay" class="camera-block-overlay">
             <div class="camera-block-card">
                 <h3>⚠️ AKSES DIBLOKIR</h3>
@@ -82,7 +80,6 @@
             </div>
         </div>
 
-        <!-- POP-UP MENU PILIH MODE -->
         <div id="modeOverlay" class="mode-overlay">
             <div class="mode-title">✨ PILIH JENIS FRAME SYSTEM ✨</div>
             <div class="mode-card-row">
@@ -91,10 +88,8 @@
             </div>
         </div>
 
-        <!-- SEJAJAR WORKSPACE LAYER -->
         <div class="pb-main-workspace-layout">
             
-            <!-- STACK KIRI (Kamera Landscape Lebih Besar & 1 Panduan Pas) -->
             <div class="pb-left-stack">
                 <div class="pb-camera-box">
                     <div id="pbLiveStatus">● REC VIDEO BUFFER</div>
@@ -103,14 +98,12 @@
                 </div>
                 
                 <div class="pb-notice-board">
-                    ✅ <b>PANDUAN STUDIO</b>: Posisi preview kamera kiri sudah sejajar penuh secara vertikal dengan lembar bingkai preview cetak kanan. Klik pada area foto di dalam frame jika ingin mengulang foto tertentu (Retake).
+                    ✅ <b>PANDUAN STUDIO</b>: Posisi preview kamera kiri diset ke rasio 16:9 agar seimbang dengan bentuk lubang foto landscape. Sisi kanan otomatis meluruskan tingginya agar sejajar presisi ke bawah. Klik bidang foto untuk melakukan Retake.
                 </div>
             </div>
 
-            <!-- DISPLAY KANAN (Otomatis sejajar mengikuti tinggi total kolom kiri secara presisi) -->
             <div class="pb-right-frame-display">
                 
-                <!-- PANEL MODE NEWSPAPER -->
                 <div id="viewNewspaper" class="newspaper-container">
                     <div class="np-slot" id="npSlot_0" style="top:37.0%; left:5.8%; width:88.5%; height:32.5%;" onclick="triggerRetakeProcess(0)"></div>
                     <div class="np-slot" id="npSlot_1" style="top:70.8%; left:62.8%; width:32.0%; height:15.0%;" onclick="triggerRetakeProcess(1)"></div>
@@ -118,7 +111,6 @@
                     <img class="newspaper-bg-img" src="PB NEWSPAPER.png" alt="Newspaper Template" onerror="this.style.background='#ddd';">
                 </div>
 
-                <!-- PANEL MODE PHOTO STRIP -->
                 <div id="viewPhotoStrip" class="strip-container">
                     <div id="stripLeft" class="pb-strip" style="background: #4A1519;">
                         <div class="pb-slot" id="slot_0" onclick="triggerRetakeProcess(0)"></div>
@@ -137,7 +129,6 @@
             </div>
         </div>
 
-        <!-- BARIS TOMBOL KONTROL -->
         <div class="pb-bottom-controls">
             <div class="pb-row-buttons">
                 <button id="btnActionStart" class="pb-btn" style="background: #9cdb93; border-color: #72b56b;" onclick="startSutterSequence()">📸 TAKE (MULAI FOTO)</button>
@@ -240,12 +231,13 @@
             const activeIdx = isRetakeActive ? retakeTargetIdx : currentIndex;
             videoFramesBuffer[activeIdx] = [];
 
+            // Berubah menjadi sampling rasio 16:9 (640x360) menyesuaikan canvas live preview
             canvasRenderInterval = setInterval(() => {
                 const frameCanvas = document.createElement('canvas');
-                frameCanvas.width = 600;
-                frameCanvas.height = 400;
+                frameCanvas.width = 640;
+                frameCanvas.height = 360;
                 const fCtx = frameCanvas.getContext('2d');
-                drawAbsoluteRasio32(fCtx, video, 0, 0, 600, 400);
+                drawAbsoluteRasio169(fCtx, video, 0, 0, 640, 360);
                 videoFramesBuffer[activeIdx].push(frameCanvas);
             }, 100); 
 
@@ -266,11 +258,12 @@
         function finalizeCapture() {
             const activeIdx = isRetakeActive ? retakeTargetIdx : currentIndex;
 
+            // Berubah menjadi rasio tangkapan kualitas tinggi 16:9 asli (2560x1440)
             const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = 2400;
-            tempCanvas.height = 1600;
+            tempCanvas.width = 2560;
+            tempCanvas.height = 1440;
             const tCtx = tempCanvas.getContext('2d');
-            drawAbsoluteRasio32(tCtx, video, 0, 0, 2400, 1600);
+            drawAbsoluteRasio169(tCtx, video, 0, 0, 2560, 1440);
             const dataUri = tempCanvas.toDataURL('image/png');
 
             photosArray[activeIdx] = dataUri;
@@ -297,7 +290,7 @@
             }
         }
 
-        function drawAbsoluteRasio32(ctx, img, x, y, targetW, targetH) {
+        function drawAbsoluteRasio169(ctx, img, x, y, targetW, targetH) {
             let imgWidth = img.videoWidth || 1280;
             let imgHeight = img.videoHeight || 720;
             
@@ -372,7 +365,7 @@
                 for (let i = 0; i < maxPhotosCount; i++) {
                     if (photosArray[i]) {
                         const base64Data = photosArray[i].split(',')[1];
-                        zip.file(`foto-asli-2400x1600-bingkai-${i+1}.png`, base64Data, {base64: true});
+                        zip.file(`foto-asli-169-bingkai-${i+1}.png`, base64Data, {base64: true});
                     }
                 }
 
@@ -440,7 +433,7 @@
                         for (let i = 0; i < 3; i++) {
                             const imgData = photosArray[startIdx + i];
                             if (imgData) {
-                                drawImageProporsional(ctxPS, await loadImageAsync(imgData), offsetX + 40, 120 + (i * 480), 520, 346.6);
+                                drawImageProporsional(ctxPS, await loadImageAsync(imgData), offsetX + 40, 120 + (i * 480), 520, 292.5); // Proporsi cetak 16:9 disamakan
                             }
                         }
                         ctxPS.fillStyle = "#ffffff";
@@ -474,14 +467,14 @@
                         ctxPS.fillStyle = currentThemeColor; ctxPS.fillRect(0, 0, 600, 1800);
                         for (let i = 0; i < 3; i++) {
                             const frames = videoFramesBuffer[i];
-                            if (frames && frames.length > 0) drawImageProporsional(ctxPS, frames[f % frames.length], 40, 120 + (i * 480), 520, 346.6);
+                            if (frames && frames.length > 0) drawImageProporsional(ctxPS, frames[f % frames.length], 40, 120 + (i * 480), 520, 292.5);
                         }
                         ctxPS.fillStyle = "#ffffff"; ctxPS.font = "italic bold 46px 'Times New Roman', serif"; ctxPS.textAlign = "center"; ctxPS.fillText("Elevate Moment's", 300, 1680);
                         
                         ctxPS.fillStyle = currentThemeColor; ctxPS.fillRect(600, 0, 600, 1800);
                         for (let i = 0; i < 3; i++) {
                             const frames = videoFramesBuffer[3 + i];
-                            if (frames && frames.length > 0) drawImageProporsional(ctxPS, frames[f % frames.length], 640, 120 + (i * 480), 520, 346.6);
+                            if (frames && frames.length > 0) drawImageProporsional(ctxPS, frames[f % frames.length], 640, 120 + (i * 480), 520, 292.5);
                         }
                         ctxPS.fillStyle = "#ffffff"; ctxPS.fillText("Elevate Moment's", 900, 1680);
 
