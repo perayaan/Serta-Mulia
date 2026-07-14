@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aesthetic Studio - Balanced Photo Strip Engine</title>
+    <title>Aesthetic Studio - Master Balanced Engine</title>
     <!-- Library untuk membungkus output menjadi berkas ZIP tunggal -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
@@ -35,7 +35,7 @@
         #pbCountdown { display: none; position: absolute; font-size: 100px; font-weight: 900; color: white; text-shadow: 0px 0px 15px rgba(0,0,0,0.8); z-index: 10; }
         #pbLiveStatus { position: absolute; top: 15px; left: 15px; background: red; color: white; padding: 4px 10px; font-size: 11px; font-weight: bold; display: none; animation: pulse 1s infinite alternate; }
 
-        /* TEKS PANDUAN SINGKAT SESUAI PERMINTAAN */
+        /* TEKS PANDUAN RINGKAS */
         .pb-notice-board { background: #fffdf5; border: 2px dashed #ffb3ba; font-size: 11.5px; font-weight: bold; color: #b56b72; padding: 12px 18px; line-height: 1.6; border-radius: 6px; box-sizing: border-box; text-align: left; }
 
         /* PANEL SUB-SELEKSI FRAME SEKARANG DI KIRI (RATA TENGAH MURNI) */
@@ -118,7 +118,7 @@
                 </div>
             </div>
 
-            <!-- DISPLAY KANAN (Murni Frame, Tinggi Otomatis Mengikuti Sisi Kiri Tanpa Celah) -->
+            <!-- DISPLAY KANAN -->
             <div class="pb-right-frame-display">
                 
                 <!-- PANEL MODE NEWSPAPER -->
@@ -523,7 +523,7 @@
 
             } catch (error) {
                 alert("Terjadi Kendala Teknis: " + error.message);
-            } finaly {
+            } finally {
                 btnDownload.disabled = false;
                 btnDownload.innerText = "🎁 UNDUH ZIP HASIL FOTO & VIDEO";
             }
