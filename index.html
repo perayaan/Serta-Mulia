@@ -3,32 +3,234 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aesthetic Studio - Master Dual Column Control Engine</title>
+    <title>Pixel Cat Adventure & Aesthetic Studio</title>
     <!-- Library untuk membungkus output menjadi berkas ZIP tunggal -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
-        body { background: #87CEEB; font-family: 'Courier New', Courier, monospace; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; box-sizing: border-box; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #87CEEB; font-family: 'Courier New', Courier, monospace; user-select: none; }
+        #gameCanvas { display: block; width: 100vw; height: 100vh; image-rendering: pixelated; }
         
+        /* POP-UP UTAMA: Windows Retro Pink/Pastel Pixel */
+        #retroPopup {
+            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: #ffffff; border: 3px solid #db939a; box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.15);
+            z-index: 100; width: 540px; height: 310px; flex-direction: column; padding: 0;
+            box-sizing: border-box; image-rendering: pixelated;
+        }
+
+        .popup-titlebar {
+            background: #ffb3ba; height: 32px; display: flex; align-items: center; justify-content: space-between;
+            padding: 0 10px; border-bottom: 3px solid #db939a; color: #ffffff; font-weight: bold; font-size: 16px; box-sizing: border-box;
+        }
+        .titlebar-left { display: flex; align-items: center; gap: 6px; font-family: inherit; }
+        .titlebar-buttons { display: flex; }
+        .titlebar-btn {
+            background: #ffffff; color: #db939a; border: 2px solid #db939a; width: 20px; height: 20px;
+            font-size: 11px; font-weight: bold; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; box-sizing: border-box; padding-bottom: 2px;
+        }
+
+        .popup-body { display: flex; flex-direction: row; padding: 15px; height: calc(100% - 32px); box-sizing: border-box; gap: 15px; }
+        .popup-left { width: 40%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; position: relative; height: 100%; box-sizing: border-box; }
+        #rafizaImg { max-width: 100%; max-height: 220px; object-fit: contain; image-rendering: pixelated; z-index: 2; }
+
+        .speech-bubble {
+            position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: #ffffff;
+            border: 3px solid #db939a; color: #db939a; padding: 6px; font-size: 11px; font-weight: bold;
+            width: 155px; text-align: center; box-sizing: border-box; box-shadow: 2px 2px 0px rgba(0,0,0,0.05); z-index: 3;
+        }
+        .speech-bubble::after { content: ''; position: absolute; bottom: -9px; left: 50%; transform: translateX(-50%); border-width: 5px; border-style: solid; border-color: #ffffff transparent transparent transparent; }
+        .speech-bubble::before { content: ''; position: absolute; bottom: -13px; left: 50%; transform: translateX(-50%); border-width: 5px; border-style: solid; border-color: #db939a transparent transparent transparent; z-index: -1; }
+        
+        .popup-right { width: 60%; display: flex; flex-direction: column; justify-content: center; gap: 12px; height: 100%; box-sizing: border-box; text-align: center; }
+        .text-container { display: flex; flex-direction: column; gap: 4px; align-items: center; }
+        .popup-title { font-size: 19px; font-weight: 900; color: #b56b72; margin: 0; line-height: 1.2; letter-spacing: 1px; text-shadow: 1px 1px 0px #ffb3ba; }
+        .popup-clue { font-size: 11px; color: #db939a; font-weight: bold; margin-top: 2px; }
+        #pinInput { width: 100%; background: #fff5f6; border: 3px solid #ffb3ba; color: #b56b72; padding: 8px; font-size: 18px; font-weight: bold; font-family: inherit; box-sizing: border-box; outline: none; letter-spacing: 4px; text-align: center; }
+        #actionBtn {
+            background: #ffb3ba; color: #ffffff; border: 3px solid #db939a; padding: 10px; font-family: inherit;
+            font-weight: bold; font-size: 14px; cursor: pointer; text-align: center; width: 100%; box-sizing: border-box;
+            text-transform: uppercase; letter-spacing: 1px; box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.1);
+        }
+        #actionBtn:hover { background: #ffc2c9; }
+        #actionBtn:active { background: #e5a1a8; transform: translate(1px, 1px); box-shadow: 0px 0px 0px transparent; }
+
+        #exitBtn {
+            display: none; position: fixed; top: 20px; right: 20px; z-index: 150; background: #ffb3ba;
+            border: 3px solid #db939a; color: white; padding: 10px 15px; font-weight: bold; cursor: pointer;
+            font-family: inherit; font-size: 16px; box-shadow: 2px 2px 0px rgba(0,0,0,0.15);
+        }
+        #exitBtn:hover { background: #ffc2c9; }
+        #exitBtn:active { transform: translate(1px, 1px); box-shadow: 0px 0px 0px transparent; }
+
+        #songPanel {
+            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+            width: 320px; background: white; border: 3px solid #db939a; padding: 15px; z-index: 150; 
+            box-shadow: 4px 4px 0px rgba(0,0,0,0.2); font-family: inherit; max-height: 80vh; overflow-y: auto;
+        }
+        .song-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 2px dashed #ffb3ba; padding-bottom: 8px; font-weight: bold; font-size: 14px; }
+        .play-btn { background: #ffb3ba; border: 2px solid #db939a; color: white; cursor: pointer; padding: 5px 12px; font-weight: bold; font-family: inherit; font-size: 12px; transition: 0.1s; }
+        .play-btn:active { transform: translate(1px, 1px); }
+
+        /* --- LAYOUT CONTAINER MINI-GAME PUZZLE GAMBAR --- */
+        #puzzlePopup {
+            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: #ffffff; border: 4px solid #db939a; box-shadow: 6px 6px 0px rgba(0, 0, 0, 0.15);
+            z-index: 160; width: 1200px; height: 750px; flex-direction: column; padding: 0;
+            box-sizing: border-box; image-rendering: pixelated; transform-origin: center;
+        }
+        .puzzle-header-text {
+            padding: 8px; text-align: center; font-weight: bold; font-size: 13px;
+            color: #b56b72; background: #fff5f6; border-bottom: 2px dashed #ffb3ba;
+        }
+        .puzzle-main-layout {
+            display: flex; flex-direction: row; width: 100%; height: 460px; padding: 10px; box-sizing: border-box; gap: 15px;
+        }
+        .puzzle-board-wrapper {
+            width: 640px; height: 425.6px; position: relative; background: #fafafa; border: 3px dashed #ffb3ba; box-sizing: border-box;
+        }
+        .puzzle-board-left {
+            position: absolute; top: 0; left: 0; width: 1600px; height: 1064px;
+            transform: scale(0.395); transform-origin: top left;
+        }
+        .puzzle-grid-target {
+            display: grid; grid-template-columns: repeat(4, 400px); grid-template-rows: repeat(4, 266px); width: 100%; height: 100%;
+            position: absolute; top: 0; left: 0; z-index: 1;
+        }
+        .grid-slot {
+            border: 2px dashed #ffc2c9; box-sizing: border-box; display: flex; align-items: center; justify-content: center; color: #ffe3e6; font-size: 24px; font-weight: bold;
+            position: relative; z-index: 1;
+        }
+        .puzzle-guide-right {
+            width: 520px; height: 425px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; background: #fff5f6; border: 2px solid #ffb3ba; padding: 15px; box-sizing: border-box;
+        }
+        .puzzle-pool-bottom {
+            position: relative; width: 1180px; height: 210px; margin: 0 auto 10px auto; background: #fff5f6; border: 2px solid #ffb3ba; overflow: hidden; box-sizing: border-box;
+        }
+        .draggable-piece {
+            position: absolute; width: 400px; height: 266px; 
+            object-fit: cover; cursor: move; image-rendering: pixelated; border: 1px solid rgba(0,0,0,0.15); 
+            user-select: none; -webkit-user-drag: none;
+            transform: scale(0.395); transform-origin: top left;
+            z-index: 10;
+        }
+
+        /* --- LAYOUT CONTAINER MINI-GAME RAK FOTO --- */
+        #photoPopup {
+            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: #ffffff; border: 4px solid #db939a; box-shadow: 6px 6px 0px rgba(0, 0, 0, 0.15);
+            z-index: 160; width: 1160px; height: 580px; flex-direction: column; padding: 15px;
+            box-sizing: border-box; image-rendering: pixelated;
+        }
+        .photo-horizontal-container {
+            display: flex; flex-direction: column; width: 100%; height: auto; gap: 20px; box-sizing: border-box; margin-top: 15px;
+        }
+        .photo-slots-row {
+            display: flex; flex-direction: row; justify-content: space-between; width: 100%; height: 150px; background: #fff5f6; padding: 10px; box-sizing: border-box; border: 2px dashed #ffb3ba;
+        }
+        .photo-slot-wrapper {
+            display: flex; flex-direction: column; align-items: center; width: 110px; gap: 5px;
+        }
+        .photo-slot-title { font-size: 11px; font-weight: 900; color: #b56b72; text-align: center; }
+        .photo-target-slot { width: 110px; height: 110px; border: 2px dashed #ffc2c9; background: #ffffff; box-sizing: border-box; position: relative; }
+        .photo-pool-row {
+            width: 100%; height: 140px; background: #fafafa; border: 2px solid #ffb3ba; position: relative; box-sizing: border-box; padding: 12px; display: flex; flex-direction: row; gap: 15px; justify-content: center; align-items: center;
+        }
+        .draggable-photo-item {
+            width: 110px; height: 110px; object-fit: cover; cursor: move; image-rendering: pixelated; border: 2px solid rgba(0,0,0,0.15); box-sizing: border-box; position: absolute; user-select: none; -webkit-user-drag: none;
+            z-index: 10;
+        }
+        .photo-buttons-row { display: flex; flex-direction: row; justify-content: center; gap: 20px; width: 100%; margin-top: 10px; }
+
+        /* --- KOTAK POP-UP MESIN CAPIT RETRO --- */
+        #clawMachinePopup {
+            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: #ffffff; border: 4px solid #db939a; box-shadow: 6px 6px 0px rgba(0, 0, 0, 0.15);
+            z-index: 200; width: 680px; height: 720px; flex-direction: column; padding: 0;
+            box-sizing: border-box; image-rendering: pixelated;
+        }
+        .claw-body { display: flex; flex-direction: column; align-items: center; justify-content: center; height: calc(100% - 32px); padding: 10px; box-sizing: border-box; background: #fff5f6; }
+        #clawCanvas { background: transparent; display: block; image-rendering: pixelated; border: 2px solid #ffb3ba; width: 100%; height: 100%; max-width: 630px; max-height: 650px; }
+
+        /* --- NOTIFIKASI CUSTOM POP-UP DI ATAS GAME --- */
+        #customAlert {
+            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 420px; background: white; border: 4px solid #db939a; box-shadow: 4px 4px 0px rgba(0,0,0,0.15);
+            z-index: 500; flex-direction: column; padding: 0; box-sizing: border-box; image-rendering: pixelated;
+        }
+        .alert-body { padding: 25px 15px; text-align: center; font-weight: bold; color: #b56b72; font-size: 14px; line-height: 1.4; }
+        
+        /* POP-UP BERHASIL */
+        #successTextPopup {
+            display: none; position: fixed; top: 35%; left: 50%; transform: translate(-50%, -50%);
+            z-index: 1000; text-align: center; pointer-events: none; font-family: inherit;
+        }
+        .success-title { 
+            font-size: 36px; font-weight: 900; color: #ffffff; 
+            text-shadow: 
+                -3px -3px 0 #b56b72,  3px -3px 0 #b56b72, 
+                -3px  3px 0 #b56b72,  3px  3px 0 #b56b72,
+                -3px  0px 0 #b56b72,  3px  0px 0 #b56b72,
+                 0px -3px 0 #b56b72,  0px  3px 0 #b56b72;
+            margin-bottom: 8px; letter-spacing: 2px;
+        }
+        .success-subtitle { 
+            font-size: 18px; font-weight: bold; color: #ffffff; 
+            text-shadow: 
+                -2px -2px 0 #528c4c,  2px -2px 0 #528c4c, 
+                -2px  2px 0 #528c4c,  2px  2px 0 #528c4c;
+            letter-spacing: 1px;
+        }
+
+        .reward-coin-element {
+            display: none; position: fixed; z-index: 999; width: 250px; height: 250px;
+            image-rendering: pixelated; user-select: none; -webkit-user-drag: none;
+            transition: none; top: 50%; left: 50%;
+        }
+
+        @keyframes coinZoomScreenInAndOut {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; top: 50%; left: 50%; }
+            25% { transform: translate(-50%, -50%) scale(1.6); opacity: 1; top: 50%; left: 50%; }
+            65% { transform: translate(-50%, -50%) scale(1.6); opacity: 1; top: 50%; left: 50%; }
+            100% { transform: translate(-50%, -50%) scale(0); opacity: 0; top: 50%; left: 50%; }
+        }
+        @keyframes rafizaZoomScreen {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; top: 50%; left: 50%; }
+            25% { transform: translate(-50%, -50%) scale(0.7); opacity: 1; top: 50%; left: 50%; }
+            65% { transform: translate(-50%, -50%) scale(0.7); opacity: 1; top: 50%; left: 50%; }
+            100% { transform: translate(-50%, -50%) scale(0); opacity: 0; top: 50%; left: 50%; }
+        }
+        @keyframes coinBounceTwice {
+            0%, 100% { margin-top: 0; }
+            25% { margin-top: -55px; }
+            50% { margin-top: 0; }
+            75% { margin-top: -25px; }
+        }
+
+        /* ==========================================================================
+           ENGINE STYLE UTAK-ATIK COUPLING PHOTOBOOTH SYSTEM LAYER (OVERLAY SCREEN)
+           ========================================================================== */
+        #masterPhotoboothUI {
+            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0, 0, 0, 0.5); z-index: 300; align-items: center; justify-content: center;
+            overflow-y: auto; padding: 20px 0; box-sizing: border-box;
+        }
         .pb-window { background: #ffffff; border: 4px solid #db939a; box-shadow: 6px 6px 0px rgba(0, 0, 0, 0.15); width: 1360px; max-width: 98vw; display: flex; flex-direction: column; box-sizing: border-box; position: relative; margin: auto; }
         .pb-titlebar { background: #ffb3ba; height: 36px; display: flex; align-items: center; padding: 0 12px; border-bottom: 4px solid #db939a; color: #ffffff; font-weight: bold; font-size: 14px; }
         
-        /* POP-UP MENU PILIH MODE */
         .mode-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.9); z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 30px; }
         .mode-title { font-size: 24px; font-weight: 900; color: #b56b72; text-shadow: 1px 1px white; }
         .mode-card-row { display: flex; gap: 30px; }
         .mode-card { border: 4px solid #db939a; background: #fff5f6; padding: 30px; border-radius: 8px; font-size: 18px; font-weight: bold; color: #b56b72; cursor: pointer; transition: 0.2s; width: 220px; text-align: center; box-shadow: 4px 4px 0px rgba(0,0,0,0.1); }
         .mode-card:hover { background: #ffe3e6; transform: scale(1.05); }
 
-        /* AUTOMATIC CAMERA OVERLAY */
         .camera-block-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); z-index: 200; display: none; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box; }
         .camera-block-card { background: #ffffff; border: 4px solid #db939a; padding: 25px 40px; border-radius: 8px; text-align: center; box-shadow: 0px 10px 25px rgba(0,0,0,0.2); width: 420px; max-width: 85vw; }
         .camera-block-card h3 { color: #b56b72; margin-top: 0; font-size: 20px; font-weight: 900; }
         .camera-block-card p { font-size: 14px; color: #555; font-weight: bold; margin-bottom: 20px; line-height: 1.5; }
 
-        /* WORKSPACE UTAMA SEJAJAR */
         .pb-main-workspace-layout { display: flex; padding: 25px; gap: 25px; background: #fff5f6; box-sizing: border-box; justify-content: center; align-items: stretch; }
         
-        /* SISI KIRI: STACK KAMERA + PANDUAN + BUTTON FRAME 1 & 2 */
         .pb-left-stack { width: 680px; display: flex; flex-direction: column; gap: 15px; justify-content: space-between; }
         .pb-camera-box { width: 680px; height: 382.5px; background: #000; border: 3px solid #db939a; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; box-sizing: border-box; }
         #pbVideo { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
@@ -37,27 +239,22 @@
 
         .pb-notice-board { background: #fffdf5; border: 2px dashed #ffb3ba; font-size: 11.5px; font-weight: bold; color: #b56b72; padding: 12px 18px; line-height: 1.6; border-radius: 6px; box-sizing: border-box; text-align: left; }
 
-        /* BARIS TOMBOL BINGKAI DI KIRI (DI BAWAH PANDUAN) */
         .pb-subframe-selector-bar { display: none; gap: 12px; justify-content: center; align-items: center; width: 100%; margin-top: 2px; }
         .subframe-btn { background: #fff5f6; color: #b56b72; border: 2px solid #db939a; padding: 6px 20px; font-size: 11px; font-weight: bold; cursor: pointer; border-radius: 4px; text-transform: uppercase; box-shadow: 2px 2px 0px rgba(0,0,0,0.05); transition: 0.1s; }
         .subframe-btn.active { background: #ffb3ba; color: white; }
 
-        /* SISI KANAN: STACK BINGKAI + BUTTON PREVIEW TOGGLE (DI BAWAH FRAME PREVIEW) */
         .pb-right-column-stack { flex: 1; display: flex; flex-direction: column; gap: 15px; justify-content: space-between; align-items: center; }
         .pb-right-frame-display { background: white; border: 3px solid #ffb3ba; display: flex; align-items: center; justify-content: center; padding: 15px; box-sizing: border-box; width: 100%; flex: 1; min-height: 440px; }
         
-        /* BARIS TOMBOL PREVIEW DI KANAN (DI BAWAH FRAME PREVIEW) */
         .pb-preview-toggle-bar { display: none; gap: 12px; justify-content: center; align-items: center; width: 100%; margin-top: 2px; }
         .toggle-view-btn { background: #ffffff; color: #db939a; border: 2px solid #db939a; padding: 6px 20px; font-size: 11px; font-weight: bold; cursor: pointer; border-radius: 4px; text-transform: uppercase; box-shadow: 2px 2px 0px rgba(0,0,0,0.05); transition: 0.2s; }
         .toggle-view-btn.active { background: #db939a; color: #ffffff; box-shadow: 0px 3px 6px rgba(0,0,0,0.1); }
 
-        /* Tampilan Koran */
         .newspaper-container { display: none; width: 345px; height: 460px; border: 1px solid #ccc; box-shadow: 2px 2px 8px rgba(0,0,0,0.1); position: relative; overflow: hidden; background: #eee; }
         .newspaper-bg-img { width: 100%; height: 100%; object-fit: contain; position: absolute; top:0; left:0; z-index: 10; pointer-events: none; }
         .np-slot { position: absolute; z-index: 5; background: #222; overflow: hidden; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .np-slot img, .np-slot canvas { width: 100%; height: 100%; object-fit: cover; }
         
-        /* Tampilan Berkas Photo Strip Menyatu */
         .photostrip-full-container { display: none; width: 320px; height: 460px; border: 1px solid #ccc; box-shadow: 2px 2px 8px rgba(0,0,0,0.1); position: relative; overflow: hidden; background: #fff; }
         .ps-bg-frame-img { width: 100%; height: 100%; object-fit: fill; position: absolute; top:0; left:0; z-index: 10; pointer-events: none; }
         .ps-slot { position: absolute; z-index: 5; background: #222; overflow: hidden; cursor: pointer; display: flex; align-items: center; justify-content: center; }
@@ -65,10 +262,9 @@
 
         .retake-active { border: 2px solid #ff0000 !important; box-shadow: 0 0 8px #ff0000; z-index: 12 !important; }
 
-        /* BARIS TOMBOL KONTROL UTAMA */
         .pb-bottom-controls { padding: 15px; background: white; border-top: 3px solid #db939a; display: flex; flex-direction: column; gap: 12px; align-items: center; }
         .pb-row-buttons { display: flex; gap: 10px; justify-content: center; width: 100%; flex-wrap: wrap; }
-        .pb-btn { background: #ffb3ba; color: white; border: 3px solid #db939a; padding: 8px 18px; font-family: inherit; font-weight: bold; font-size: 12px; cursor: pointer; box-shadow: 2px 2px 0px rgba(0,0,0,0.1); text-transform: uppercase; }
+        .pb-btn { background: #ffb3ba; color: white; border: 3px solid #db939a; padding: 8px 18px; font-family: inherit; font-weight: bold; font-size: 12px; cursor: pointer; box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.1); text-transform: uppercase; }
         .pb-btn:disabled { background: #ccc !important; border-color: #aaa !important; cursor: not-allowed; }
 
         @keyframes pulse { from { opacity: 0.5; } to { opacity: 1; } }
@@ -76,100 +272,1333 @@
 </head>
 <body>
 
-    <div class="pb-window">
-        <div class="pb-titlebar">Aesthetic Hybrid Studio Terminal - Independent Column System</div>
-        
-        <!-- POP-UP OTOMATIS JIKA KAMERA BELUM DIIZINKAN -->
-        <div id="cameraLockOverlay" class="camera-block-overlay">
-            <div class="camera-block-card">
-                <h3>⚠️ AKSES DIBLOKIR</h3>
-                <p>Harap izinkan akses kamera pada browser Anda untuk dapat menggunakan photobooth ini.</p>
-                <button class="pb-btn" style="background: #9cdb93; border-color: #72b56b;" onclick="retryCameraPermission()">🔄 COBA LAGI</button>
+    <!-- LAYER KANVAS GAME ORIGINAL -->
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- UI ELEMEN DRAGGABLE & DIALOG GAME UTAMA -->
+    <button id="exitBtn" onclick="exitHouse()">🐾 KELUAR</button>
+    <div id="songPanel">
+        <div style="font-weight: 900; margin-bottom: 15px; color: #b56b72; font-size: 16px; text-align: center;">SILAKAN PILIH LAGU</div>
+        <div id="songList"></div>
+        <button class="play-btn" style="width: 100%; margin-top: 10px; font-size: 14px; padding: 10px;" onclick="document.getElementById('songPanel').style.display='none'">TUTUP KATALOG</button>
+    </div>
+    <button id="bgmAudio" style="display:none;"></button>
+    <audio id="bgmAudioActual" loop></audio>
+
+    <img id="coinReward1" class="reward-coin-element" src="COIN.png" alt="Coin Puzzle">
+    <img id="coinReward2" class="reward-coin-element" src="COIN.png" alt="Coin Album Foto">
+    <img id="keyRewardClaw" class="reward-coin-element" src="KEY.png" alt="Key Claw Machine">
+    <img id="rafizaRewardClaw" class="reward-coin-element" src="RAFIZA SENANG.png" alt="Rafiza Senang Claw">
+
+    <div id="successTextPopup">
+        <div class="success-title" id="successMainTitle">PUZZLE SELESAI! ✨💰</div>
+        <div class="success-subtitle">Kamu mendapatkan item sebagai reward!</div>
+    </div>
+
+    <div id="customAlert">
+        <div class="popup-titlebar">
+            <div class="titlebar-left"><span>⚠ GAME NOTICE</span></div>
+            <div class="titlebar-buttons"><div class="titlebar-btn" onclick="closeCustomAlert()">X</div></div>
+        </div>
+        <div class="alert-body" id="customAlertText">Pesan Peringatan</div>
+        <div style="padding: 12px; display: flex; justify-content: center; background: #fff5f6; border-top: 2px dashed #ffb3ba;">
+            <button class="play-btn" style="padding: 6px 24px; font-size: 13px;" onclick="closeCustomAlert()">OK</button>
+        </div>
+    </div>
+
+    <div id="clawMachinePopup">
+        <div class="popup-titlebar">
+            <div class="titlebar-left"><span>🕹 Mini-Game: Tangkap Hati Spesial</span></div>
+            <div class="titlebar-buttons"><div class="titlebar-btn" onclick="closeClawPopupContainer()">X</div></div>
+        </div>
+        <div class="claw-body">
+            <canvas id="clawCanvas" width="2640" height="2640"></canvas>
+        </div>
+    </div>
+
+    <div id="retroPopup">
+        <div class="popup-titlebar">
+            <div class="titlebar-left"><span>▲</span></div>
+            <div class="titlebar-buttons">
+                <div class="titlebar-btn" onclick="document.getElementById('retroPopup').style.display='none'; isPopupActive=false;">X</div>
             </div>
         </div>
-
-        <!-- POP-UP MENU PILIH MODE -->
-        <div id="modeOverlay" class="mode-overlay">
-            <div class="mode-title">✨ PILIH JENIS FRAME SYSTEM ✨</div>
-            <div class="mode-card-row">
-                <div class="mode-card" onclick="selectAppMode('newspaper')">📰 NEWSPAPER<br><span style="font-size:11px;font-weight:normal;">Romantic News Edition</span></div>
-                <div class="mode-card" onclick="selectAppMode('photostrip')">📸 PHOTO STRIP<br><span style="font-size:11px;font-weight:normal;">Premium Double Strip</span></div>
+        <div class="popup-body">
+            <div class="popup-left">
+                <div class="speech-bubble" id="bubbleText">Hayo tebak passwordnya! :P</div>
+                <img id="rafizaImg" src="RAFIZA PASS.png" alt="Rafiza">
             </div>
-        </div>
-
-        <!-- SEJAJAR WORKSPACE LAYER -->
-        <div class="pb-main-workspace-layout">
-            
-            <!-- STACK KIRI: KAMERA + PANDUAN + TOMBOL PILIH BINGKAI -->
-            <div class="pb-left-stack">
-                <div class="pb-camera-box">
-                    <div id="pbLiveStatus">● REC VIDEO BUFFER</div>
-                    <div id="pbCountdown">5</div>
-                    <video id="pbVideo" autoplay playsinline></video>
+            <div class="popup-right">
+                <div class="text-container">
+                    <div class="popup-title">MASUKKAN PASSWORD DULU</div>
+                    <div class="popup-clue">Clue: special date of us xixi</div>
                 </div>
-                
-                <div class="pb-notice-board">
-                    📌 <b>ALUR PENGGUNAAN STUDIO:</b><br>
-                    1. <b>PILIH FRAME</b>: Ganti opsi desain bingkai foto melalui tombol di bawah ini.<br>
-                    2. <b>TAKE FOTO</b>: Klik tombol hijau di bawah untuk mulai menjepret seluruh slot.<br>
-                    3. <b>RETAKE FOTO</b>: Klik slot foto mana saja di bingkai kanan untuk mengulang jepretan itu.<br>
-                    4. <b>DOWNLOAD FOTO</b>: Klik tombol unduh berkas untuk menyimpan paket berkas foto & video.
-                </div>
-
-                <!-- MENU FRAME SEJAJAR KIRI DI BAWAH PANDUAN -->
-                <div id="subframeBar" class="pb-subframe-selector-bar">
-                    <button id="subBtn1" class="subframe-btn active" onclick="changeSubFrameSelection(1)">🖼️ FRAME 1</button>
-                    <button id="subBtn2" class="subframe-btn" onclick="changeSubFrameSelection(2)">🖼️ FRAME 2</button>
-                </div>
-            </div>
-
-            <!-- STACK KANAN: FRAME PREVIEW DISPLAY + TOMBOL PREVIEW TOGGLE DI BAWAHNYA -->
-            <div class="pb-right-column-stack">
-                <div class="pb-right-frame-display">
-                    <!-- PANEL MODE NEWSPAPER -->
-                    <div id="viewNewspaper" class="newspaper-container">
-                        <div class="np-slot" id="npSlot_0" style="top:37.0%; left:5.8%; width:88.5%; height:32.5%;" onclick="triggerRetakeProcess(0)"></div>
-                        <div class="np-slot" id="npSlot_1" style="top:70.8%; left:62.8%; width:32.0%; height:15.0%;" onclick="triggerRetakeProcess(1)"></div>
-                        <div class="np-slot" id="npSlot_2" style="top:86.0%; left:5.8%; width:28.5%; height:12.5%;" onclick="triggerRetakeProcess(2)"></div>
-                        <img class="newspaper-bg-img" src="PB NEWSPAPER.png" alt="Newspaper Template" onerror="this.style.background='#ddd';">
-                    </div>
-
-                    <!-- PANEL MODE PHOTO STRIP MENYATU (6 Slot Presisi) -->
-                    <div id="viewPhotoStrip" class="photostrip-full-container">
-                        <!-- Strip Kiri -->
-                        <div class="ps-slot" id="psSlot_0" style="top:9.8%; left:3.2%; width:43.6%; height:21.8%;" onclick="triggerRetakeProcess(0)"></div>
-                        <div class="ps-slot" id="psSlot_1" style="top:32.6%; left:3.2%; width:43.6%; height:21.8%;" onclick="triggerRetakeProcess(1)"></div>
-                        <div class="ps-slot" id="psSlot_2" style="top:55.4%; left:3.2%; width:43.6%; height:21.8%;" onclick="triggerRetakeProcess(2)"></div>
-                        
-                        <!-- Strip Kanan -->
-                        <div class="ps-slot" id="psSlot_3" style="top:9.8%; left:53.2%; width:43.6%; height:21.8%;" onclick="triggerRetakeProcess(3)"></div>
-                        <div class="ps-slot" id="psSlot_4" style="top:32.6%; left:53.2%; width:43.6%; height:21.8%;" onclick="triggerRetakeProcess(4)"></div>
-                        <div class="ps-slot" id="psSlot_5" style="top:55.4%; left:53.2%; width:43.6%; height:21.8%;" onclick="triggerRetakeProcess(5)"></div>
-                        
-                        <img id="psFrameImageElement" class="ps-bg-frame-img" src="PB PHOTOSTRIP 1.png" alt="Photo Strip Frame" onerror="this.style.background='#eee';">
-                    </div>
-                </div>
-
-                <!-- PILIHAN TAMPILAN PREVIEW (DIPINDAH KE BAWAH BINGKAI PREVIEW SEBELAH KANAN) -->
-                <div id="previewToggleBar" class="pb-preview-toggle-bar">
-                    <button id="btnViewStatic" class="toggle-view-btn active" onclick="setPreviewRenderMode('static')">🖼️ PHOTO PREVIEW</button>
-                    <button id="btnViewLive" class="toggle-view-btn" onclick="setPreviewRenderMode('live')">✨ LIVE PHOTO</button>
-                </div>
-            </div>
-            
-        </div>
-
-        <!-- BARIS TOMBOL KONTROL UTAMA -->
-        <div class="pb-bottom-controls">
-            <div class="pb-row-buttons">
-                <button id="btnActionStart" class="pb-btn" style="background: #9cdb93; border-color: #72b56b;" onclick="startSutterSequence()">📸 TAKE (MULAI FOTO)</button>
-                <button id="btnActionChange" class="pb-btn" style="background: #e2c074; border-color: #bfa35a;" onclick="backToMenuOverlay()">🔄 PILIH FRAME LAIN</button>
-                <button id="btnActionDownload" class="pb-btn" style="background: #93b5db; border-color: #6b8cb5; display: none;" onclick="packageAndDownloadZip()">🎁 UNDUH ZIP HASIL FOTO & VIDEO</button>
+                <input type="text" id="pinInput" placeholder="********" maxlength="8">
+                <button id="actionBtn" onclick="checkPin()">Open the gate!</button>
             </div>
         </div>
     </div>
 
+    <div id="puzzlePopup">
+        <div class="popup-titlebar">
+            <div class="titlebar-left"><span>🧩 Mini-Game: Susun Puzzle</span></div>
+            <div class="titlebar-buttons"><div class="titlebar-btn" onclick="closePuzzleGame()">X</div></div>
+        </div>
+        <div class="puzzle-header-text">✨ Susun puzzle dibawah ini untuk mendapatkan koin sebagai reward! ✨</div>
+        <div class="puzzle-main-layout">
+            <div class="puzzle-board-wrapper">
+                <div class="puzzle-board-left" id="puzzleBoard">
+                    <div class="puzzle-grid-target" id="puzzleGridTarget"></div>
+                </div>
+            </div>
+            <div class="puzzle-guide-right">
+                <div style="font-weight: 900; font-size: 11px; color: #b56b72; text-align: center;">PUZZLE GUIDE (ACUAN)</div>
+                <img src="PUZZLE GUIDE.png" alt="Guide" style="max-width: 100%; max-height: 200px; border: 2px solid #db939a; object-fit: contain; image-rendering: pixelated;">
+                <div style="width: 100%; display: flex; gap: 10px;">
+                    <button class="play-btn" id="btnCekPuzzle" style="flex: 1; background: #9cdb93; border-color: #72b56b; padding: 12px; font-size: 13px;" onclick="checkPuzzleSolution()">✔ CEK HASIL</button>
+                    <button class="play-btn" style="flex: 1; padding: 12px; font-size: 13px;" onclick="closePuzzleGame()">TUTUP</button>
+                </div>
+            </div>
+        </div>
+        <div class="puzzle-pool-bottom" id="puzzlePiecesPool"></div>
+    </div>
+
+    <div id="photoPopup">
+        <div class="popup-titlebar">
+            <div class="titlebar-left"><span>📸 Mini-Game: Urutkan Momen Kenangan</span></div>
+            <div class="titlebar-buttons"><div class="titlebar-btn" onclick="closePhotoGame()">X</div></div>
+        </div>
+        <div class="puzzle-header-text">✨ Urutkan kronologi foto kenangan dari Momen 1 (Paling Awal) hingga Momen 9 (Paling Baru)! ✨</div>
+        <div class="photo-horizontal-container">
+            <div class="photo-slots-row" id="photoSlotsRowTarget"></div>
+            <div class="photo-pool-row" id="photoPiecesPoolHorizontal"></div>
+            <div class="photo-buttons-row">
+                <button class="play-btn" id="btnCekPhoto" style="background: #9cdb93; border-color: #72b56b; padding: 12px 40px; font-size: 14px;" onclick="checkPhotoSolution()">✔ CEK URUTAN</button>
+                <button class="play-btn" style="padding: 12px 40px; font-size: 14px;" onclick="closePhotoGame()">TUTUP</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ==========================================================================
+       LAYER BARU OVERLAY TERMINAL ENGINE UNTUK MODUL BINGKAI PHOTOBOOTH 
+       ========================================================================== */ -->
+    <div id="masterPhotoboothUI">
+        <div class="pb-window">
+            <div class="pb-titlebar">
+                <span>Aesthetic Hybrid Studio Terminal - Synced Platform</span>
+                <button class="pb-btn" style="background:#ffb3ba; border-color:#db939a; float:right; margin-top:-5px; padding:2px 8px; font-size:10px;" onclick="closePhotoboothInterface()">❌ KELUAR PHOTOBOOTH</button>
+            </div>
+            
+            <div id="cameraLockOverlay" class="camera-block-overlay">
+                <div class="camera-block-card">
+                    <h3>⚠️ AKSES DIBLOKIR</h3>
+                    <p>Harap izinkan akses kamera pada browser Anda untuk dapat menggunakan photobooth ini.</p>
+                    <button class="pb-btn" style="background: #9cdb93; border-color: #72b56b;" onclick="retryCameraPermission()">🔄 COBA LAGI</button>
+                </div>
+            </div>
+
+            <div id="modeOverlay" class="mode-overlay">
+                <div class="mode-title">✨ PILIH JENIS FRAME SYSTEM ✨</div>
+                <div class="mode-card-row">
+                    <div class="mode-card" onclick="selectAppMode('newspaper')">📰 NEWSPAPER<br><span style="font-size:11px;font-weight:normal;">Romantic News Edition</span></div>
+                    <div class="mode-card" onclick="selectAppMode('photostrip')">📸 PHOTO STRIP<br><span style="font-size:11px;font-weight:normal;">Premium Double Strip</span></div>
+                </div>
+            </div>
+
+            <div class="pb-main-workspace-layout">
+                <div class="pb-left-stack">
+                    <div class="pb-camera-box">
+                        <div id="pbLiveStatus">● REC VIDEO BUFFER</div>
+                        <div id="pbCountdown">5</div>
+                        <video id="pbVideo" autoplay playsinline></video>
+                    </div>
+                    
+                    <div class="pb-notice-board">
+                        📌 <b>ALUR PENGGUNAAN STUDIO:</b><br>
+                        1. <b>PILIH FRAME</b>: Ganti opsi desain bingkai foto melalui tombol di bawah ini.<br>
+                        2. <b>TAKE FOTO</b>: Klik tombol hijau di bawah untuk mulai menjepret seluruh slot.<br>
+                        3. <b>RETAKE FOTO</b>: Klik slot foto mana saja di bingkai kanan untuk mengulang jepretan itu.<br>
+                        4. <b>DOWNLOAD FOTO</b>: Klik tombol unduh berkas untuk menyimpan paket berkas foto & video.
+                    </div>
+
+                    <div id="subframeBar" class="pb-subframe-selector-bar">
+                        <button id="subBtn1" class="subframe-btn active" onclick="changeSubFrameSelection(1)">🖼️ FRAME 1</button>
+                        <button id="subBtn2" class="subframe-btn" onclick="changeSubFrameSelection(2)">🖼️ FRAME 2</button>
+                    </div>
+                </div>
+
+                <div class="pb-right-column-stack">
+                    <div class="pb-right-frame-display">
+                        <div id="viewNewspaper" class="newspaper-container">
+                            <div class="np-slot" id="npSlot_0" style="top:37.0%; left:5.8%; width:88.5%; height:32.5%;" onclick="triggerRetakeProcess(0)"></div>
+                            <div class="np-slot" id="npSlot_1" style="top:70.8%; left:62.8%; width:32.0%; height:15.0%;" onclick="triggerRetakeProcess(1)"></div>
+                            <div class="np-slot" id="npSlot_2" style="top:86.0%; left:5.8%; width:28.5%; height:12.5%;" onclick="triggerRetakeProcess(2)"></div>
+                            <img class="newspaper-bg-img" src="PB NEWSPAPER.png" alt="Newspaper Template" onerror="this.style.background='#ddd';">
+                        </div>
+
+                        <div id="viewPhotoStrip" class="photostrip-full-container">
+                            <div class="ps-slot" id="psSlot_0" style="top:9.8%; left:3.2%; width:43.6%; height:21.8%;" onclick="triggerRetakeProcess(0)"></div>
+                            <div class="ps-slot" id="psSlot_1" style="top:32.6%; left:3.2%; width:43.6%; height:21.8%;" onclick="triggerRetakeProcess(1)"></div>
+                            <div class="ps-slot" id="psSlot_2" style="top:55.4%; left:3.2%; width:43.6%; height:21.8%;" onclick="triggerRetakeProcess(2)"></div>
+                            
+                            <div class="ps-slot" id="psSlot_3" style="top:9.8%; left:53.2%; width:43.6%; height:21.8%;" onclick="triggerRetakeProcess(3)"></div>
+                            <div class="ps-slot" id="psSlot_4" style="top:32.6%; left:53.2%; width:43.6%; height:21.8%;" onclick="triggerRetakeProcess(4)"></div>
+                            <div class="ps-slot" id="psSlot_5" style="top:55.4%; left:53.2%; width:43.6%; height:21.8%;" onclick="triggerRetakeProcess(5)"></div>
+                            
+                            <img id="psFrameImageElement" class="ps-bg-frame-img" src="PB PHOTOSTRIP 1.png" alt="Photo Strip Frame" onerror="this.style.background='#eee';">
+                        </div>
+                    </div>
+
+                    <div id="previewToggleBar" class="pb-preview-toggle-bar">
+                        <button id="btnViewStatic" class="toggle-view-btn active" onclick="setPreviewRenderMode('static')">🖼️ PHOTO PREVIEW</button>
+                        <button id="btnViewLive" class="toggle-view-btn" onclick="setPreviewRenderMode('live')">✨ LIVE PHOTO</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pb-bottom-controls">
+                <div class="pb-row-buttons">
+                    <button id="btnActionStart" class="pb-btn" style="background: #9cdb93; border-color: #72b56b;" onclick="startSutterSequence()">📸 TAKE (MULAI FOTO)</button>
+                    <button id="btnActionChange" class="pb-btn" style="background: #e2c074; border-color: #bfa35a;" onclick="backToMenuOverlay()">🔄 PILIH FRAME LAIN</button>
+                    <button id="btnActionDownload" class="pb-btn" style="background: #93b5db; border-color: #6b8cb5; display: none;" onclick="packageAndDownloadZip()">🎁 UNDUH ZIP HASIL FOTO & VIDEO</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================================================
+       JAVASCRIPT MERGED LOGIC CORE ENGINE
+       ========================================================================== -->
     <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Asset Original Game
+        const imgAwan = new Image(); imgAwan.src = 'AWAN.png';
+        const imgGunung = new Image(); imgGunung.src = 'GUNUNG.png';
+        const imgTanah = new Image(); imgTanah.src = 'TANAH.png';
+        const imgJembatan = new Image(); imgJembatan.src = 'JEMBATAN.png';
+        const kucingKanan = new Image(); kucingKanan.src = 'KUCING KANAN.png';
+        const kucingKiri = new Image(); kucingKiri.src = 'KUCING KIRI.png';
+        const imgGateTutup = new Image(); imgGateTutup.src = 'GATE TUTUP.png';
+        const imgGateBuka = new Image(); imgGateBuka.src = 'GATE BUKA.png';
+        const imgSunflower = new Image(); imgSunflower.src = 'SUNFLOWER.png';
+        const imgCaraBermain = new Image(); imgCaraBermain.src = 'CARA BERMAIN.png';
+        const imgRumahMisi = new Image(); imgRumahMisi.src = 'RUMAH MISI.png';
+        const imgIsiRumahMisi = new Image(); imgIsiRumahMisi.src = 'ISI RUMAH MISI.png';
+        const imgMesinCapitLuar = new Image(); imgMesinCapitLuar.src = 'MESIN CAPIT.png';
+
+        // Aset Baru: Objek Mesin Photobooth Di Dalam Rumah Misi
+        const imgPhotoboothObject = new Image(); imgPhotoboothObject.src = 'MESIN CAPIT.png'; // Menggunakan sprite sejenis/sama untuk representasi
+
+        // Asset Fitur TV & Lagu
+        const imgTV = new Image(); imgTV.src = 'TV.png';
+        const imgSpeaker = new Image(); imgSpeaker.src = 'SPEAKER.png';
+        const tvPhotos = [];
+        for (let i = 1; i <= 10; i++) { 
+            let img = new Image(); 
+            img.src = `foto ${i}.jpg`; 
+            tvPhotos.push(img); 
+        }
+
+        const imgRakPuzzle = new Image(); imgRakPuzzle.src = 'RAK PUZZLE.png';
+        const imgRakFoto = new Image(); imgRakFoto.src = 'RAK FOTO.png';
+        
+        let isTouchingRak = false;
+        let isTouchingRakFoto = false;
+        let isTouchingPhotoboothDalam = false; // State interaksi baru
+        let isPuzzleActive = false;
+        let isPhotoActive = false;
+        let isClawPopupActive = false;
+        let isPhotoboothOverlayActive = false; // Flag status photobooth aktif
+        
+        let isPuzzleFinishedGlobal = false; 
+        let isPhotoFinishedGlobal = false;
+        let clawGameFinished = false; 
+
+        let coin1Active = false;
+        let coin2Active = false;
+        let keyClawActive = false;
+
+        const WORLD_WIDTH = 3840; 
+        const WORLD_HEIGHT = 960;
+        let cameraX = 0;
+        const keys = { left: false, right: false, up: false };
+        const player = { x: 200, y: 0, speed: 5, width: 120, height: 120, yOffset: 0, dir: 'right', vy: 0, jumping: false };
+        const zoomLevel = 1.2; 
+        const gunungYOffset = 80;
+        const awanYOffset = 100;
+        const padding = 100;
+
+        let gateOpened = false;
+        let isPopupActive = false;
+        const gateWallX = 430; 
+        let isTouchingGate = false; 
+
+        let currentScene = "luar"; 
+        let missionCompleted = false; 
+        let isTouchingHouseDoor = false;
+        let isTouchingClawMachineLuar = false;
+        const houseDoorX = 1030; 
+        const houseWallRightX = 1250; 
+        const clawMachineX = 1730; 
+
+        let tvOn = false;
+        let isTouchingTV = false;
+        let tvPhotoIndex = 0;
+        let photoFrameCounter = 0;
+        let currentSongId = 1;
+        const songFiles = ['foto kita blur.mp3', 'lagu 2.mp3', 'lagu 3.mp3', 'lagu 4.mp3', 'lagu 5.mp3', 'lagu 6.mp3'];
+
+        const loveAnimation = {
+            active: false, hearts: [], frameCounter: 0, loopCount: 0, loopLimit: 2, heartAppearDelay: 15    
+        };
+
+        // Assets Mesin Capit
+        const imgMachine = new Image(); imgMachine.src = 'CW MACHINE.png';
+        const imgMain = new Image(); imgMain.src = 'CW MAIN.png';
+        const imgBar = new Image(); imgBar.src = 'CW BAR.png';
+        const imgClaw = new Image(); imgClaw.src = 'CW CLAW.png'; 
+        const imgLeftBtn = new Image(); imgLeftBtn.src = 'CW LEFT BUTTON.png';
+        const imgRightBtn = new Image(); imgRightBtn.src = 'CW RIGHT BUTTON.png';
+        const imgMainBtn = new Image(); imgMainBtn.src = 'CW MAIN BUTTON.png';
+        const imgTumpukanHati = new Image(); imgTumpukanHati.src = 'CW TUMPUKAN HATI.png';
+        const imgOutBox = new Image(); imgOutBox.src = 'CW OUT BOX.png';
+        const imgMainClaw = new Image(); imgMainClaw.src = 'CW MAIN CLAW.png';
+        const imgHati = new Image(); imgHati.src = 'CW HATI.png';
+
+        const clawCanvas = document.getElementById('clawCanvas');
+        const clawCtx = clawCanvas.getContext('2d');
+        const size = 2640;
+        
+        let cwGameState = "idle"; 
+        let clawXOffset = -450; 
+        let mainClawYOffset = 0;
+
+        const cakarWidth = 270;   
+        const cakarHeight = 270;
+        const cakarYAdj = 350;    
+
+        const hatiWidth = 350;
+        const hatiHeight = 350;
+
+        let heartX = 1450;
+        let heartY = 1250;
+        let heartCaughtStatus = false;
+
+        let isLeftBtnClicked = false;
+        let isRightBtnClicked = false;
+        let isMainBtnClicked = false;
+
+        function initCatalog() {
+            const songList = document.getElementById('songList');
+            songList.innerHTML = '';
+            for(let i=1; i<=6; i++) {
+                let div = document.createElement('div'); 
+                div.className = 'song-item';
+                div.id = `song-item-${i}`;
+                div.innerHTML = `<span>Lagu ${i}</span><button class="play-btn" onclick="playSong(${i})">▶ PLAY</button>`;
+                songList.appendChild(div);
+            }
+            updateCatalogUI();
+        }
+        
+        function playSong(id) {
+            const audio = document.getElementById('bgmAudioActual');
+            audio.src = songFiles[id-1];
+            audio.play();
+            currentSongId = id;
+            tvOn = true;
+            updateCatalogUI();
+        }
+
+        function updateCatalogUI() {
+            for(let i=1; i<=6; i++) {
+                let el = document.getElementById(`song-item-${i}`);
+                if (el) {
+                    el.style.color = (i === currentSongId) ? '#db939a' : '#b56b72';
+                    let icon = (i === currentSongId && tvOn) ? ' 🎵' : '';
+                    el.innerHTML = `<span>Lagu ${i}${icon}</span><button class="play-btn" onclick="playSong(${i})">▶ PLAY</button>`;
+                }
+            }
+        }
+
+        function exitHouse() {
+            currentScene = "luar";
+            player.x = houseDoorX + 30; 
+            missionCompleted = true; 
+            document.getElementById('exitBtn').style.display = "none";
+            document.getElementById('songPanel').style.display = "none";
+            closePuzzleGame();
+            closePhotoGame();
+            closePhotoboothInterface();
+            updateCatalogUI();
+            
+            if (coin1Active) document.getElementById('coinReward1').style.display = 'block';
+            if (coin2Active) document.getElementById('coinReward2').style.display = 'block';
+            if (keyClawActive) document.getElementById('keyRewardClaw').style.display = 'block';
+            rearrangeItemsLayout();
+        }
+
+        initCatalog();
+
+        function startLoveAnimation() {
+            loveAnimation.active = true; loveAnimation.hearts = [];
+            loveAnimation.frameCounter = 0; loveAnimation.loopCount = 0;
+        }
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            ctx.imageSmoothingEnabled = false;
+        });
+        window.dispatchEvent(new Event('resize'));
+
+        canvas.addEventListener('click', (e) => {
+            if (currentScene !== "luar" || gateOpened || isPopupActive) return;
+            const rect = canvas.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const worldClickX = (clickX / zoomLevel) + cameraX;
+            if (worldClickX >= 350 && worldClickX <= 620) {
+                openPinPopup();
+            }
+        });
+
+        function openPinPopup() {
+            isPopupActive = true;
+            keys.left = false; keys.right = false; 
+            document.getElementById('retroPopup').style.display = 'flex';
+            document.getElementById('pinInput').value = '';
+            document.getElementById('pinInput').focus();
+            document.getElementById('rafizaImg').src = 'RAFIZA PASS.png';
+            document.getElementById('bubbleText').innerText = 'Hayo tebak passwordnya! :P';
+            document.getElementById('bubbleText').style.color = '#db939a';
+        }
+
+        function checkPin() {
+            const input = document.getElementById('pinInput').value;
+            if (input === '10102025') {
+                document.getElementById('rafizaImg').src = 'RAFIZA SENANG.png';
+                document.getElementById('bubbleText').innerText = 'Wah bener! Yeay~';
+                document.getElementById('bubbleText').style.color = '#00aa00';
+                
+                setTimeout(() => {
+                    gateOpened = true;
+                    isPopupActive = false;
+                    document.getElementById('retroPopup').style.display = 'none';
+                    startLoveAnimation();
+                }, 1500); 
+            } else {
+                document.getElementById('rafizaImg').src = 'RAFIZA MARAH.png';
+                document.getElementById('bubbleText').innerText = 'Yah masa baby lupa :(';
+                document.getElementById('bubbleText').style.color = '#ff5555';
+            }
+        }
+
+        function drawHelperTooltip(text, bx, by) {
+            ctx.save();
+            ctx.font = "bold 13px 'Courier New', monospace";
+            const textWidth = ctx.measureText(text).width;
+            ctx.fillStyle = "#ffffff";    
+            ctx.strokeStyle = "#000000";  
+            ctx.lineWidth = 3;
+            ctx.fillRect(bx - (textWidth/2) - 8, by - 12, textWidth + 16, 24);
+            ctx.strokeRect(bx - (textWidth/2) - 8, by - 12, textWidth + 16, 24);
+            ctx.fillStyle = "#000000";    
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(text, bx, by);
+            ctx.restore();
+        }
+
+        function showCustomAlert(msg) {
+            document.getElementById('customAlertText').innerText = msg;
+            document.getElementById('customAlert').style.display = 'flex';
+        }
+        function closeCustomAlert() {
+            document.getElementById('customAlert').style.display = 'none';
+        }
+
+        function resetClawMachineGameplayState() {
+            cwGameState = "idle";
+            clawXOffset = -450;
+            mainClawYOffset = 0;
+            heartX = 1450;
+            heartY = 1250;
+            heartCaughtStatus = false;
+            isLeftBtnClicked = false;
+            isRightBtnClicked = false;
+            isMainBtnClicked = false;
+        }
+
+        // Frame Loop Siklus Game Utama
+        function loop() {
+            if (!isPopupActive && !isPuzzleActive && !isPhotoActive && !isClawPopupActive && !isPhotoboothOverlayActive) {
+                if (keys.left) { 
+                    player.x -= player.speed; 
+                    player.dir = 'left'; 
+                } else if (keys.right) { 
+                    player.x += player.speed; 
+                    player.dir = 'right'; 
+                }
+                if (keys.up && !player.jumping) { 
+                    player.vy = -15; 
+                    player.jumping = true; 
+                }
+            }
+            
+            player.vy += 0.8; 
+            player.y += player.vy;
+            if (player.y > 0) { player.y = 0; player.vy = 0; player.jumping = false; }
+            
+            if (player.x < padding) player.x = padding;
+            
+            if (currentScene === "luar") {
+                if (!gateOpened && player.x >= gateWallX) { isTouchingGate = true; } else { isTouchingGate = false; }
+                if (!gateOpened && player.x > gateWallX) player.x = gateWallX;
+                
+                if (player.x >= 1050 && player.x <= 1250) { isTouchingHouseDoor = true; } else { isTouchingHouseDoor = false; }
+                if (player.x >= 1650 && player.x <= 1800) { isTouchingClawMachineLuar = true; } else { isTouchingClawMachineLuar = false; }
+
+                if (!missionCompleted && player.x > houseWallRightX) player.x = houseWallRightX;
+                
+                let maxRightLimit = WORLD_WIDTH - padding;
+                if (!keyClawActive) { maxRightLimit = 1800; }
+                if (player.x > maxRightLimit) player.x = maxRightLimit;
+
+                cameraX = player.x - canvas.width / 2 / zoomLevel;
+                let maxCameraX = (WORLD_WIDTH - (canvas.width / zoomLevel));
+                
+                if (!missionCompleted) {
+                    let lockedCameraX = 1200 - (canvas.width / zoomLevel) + 200; 
+                    if (maxCameraX > lockedCameraX) maxCameraX = Math.max(0, lockedCameraX);
+                }
+                
+                if (!keyClawActive) {
+                    let lockedClawCamX = 1800 - (canvas.width / zoomLevel) + 200;
+                    if (maxCameraX > lockedClawCamX) maxCameraX = Math.max(0, lockedClawCamX);
+                }
+
+                if (cameraX < 0) cameraX = 0;
+                if (cameraX > maxCameraX) cameraX = maxCameraX;
+
+            } else if (currentScene === "dalam_rumah") {
+                cameraX = 0; 
+                isTouchingGate = false;
+                isTouchingHouseDoor = false;
+
+                if (isPuzzleFinishedGlobal && isPhotoFinishedGlobal) {
+                    document.getElementById('exitBtn').style.display = "block";
+                } else {
+                    document.getElementById('exitBtn').style.display = "none";
+                }
+
+                const innerHouseWidthBound = canvas.width / zoomLevel;
+                if (player.x > innerHouseWidthBound - padding) {
+                    player.x = innerHouseWidthBound - padding;
+                }
+
+                if (player.x >= 130 && player.x <= 420) { isTouchingTV = true; } else { isTouchingTV = false; }
+                if (player.x >= 460 && player.x <= 640) { isTouchingRak = true; } else { isTouchingRak = false; }
+                if (player.x >= 700 && player.x <= 880) { isTouchingRakFoto = true; } else { isTouchingRakFoto = false; }
+                if (player.x >= 940 && player.x <= 1180) { isTouchingPhotoboothDalam = true; } else { isTouchingPhotoboothDalam = false; }
+            }
+            
+            const floatEffect = Math.sin(Date.now() / 300) * 5; 
+            if (currentScene === "luar" && player.x >= 1880 && player.x < 1920) { player.yOffset = -30 + floatEffect; }
+            else if (currentScene === "luar" && player.x >= 1920 && player.x < 2160) { player.yOffset = -55 + floatEffect; }
+            else if (currentScene === "luar" && player.x >= 2160 && player.x < 2220) { player.yOffset = -30 + floatEffect; }
+            else { player.yOffset = floatEffect; }
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            let pX = 0; let pY = 0;
+            if (currentScene === "luar") {
+                const drawWidth = WORLD_WIDTH * zoomLevel;
+                const drawHeight = WORLD_HEIGHT * zoomLevel;
+                const yOffset = (canvas.height - drawHeight) / 2;
+
+                ctx.drawImage(imgAwan, -cameraX * 0.05 * zoomLevel, yOffset + awanYOffset, drawWidth, drawHeight * 0.8);
+                ctx.drawImage(imgGunung, -cameraX * 0.4 * zoomLevel, yOffset + gunungYOffset, drawWidth, drawHeight);
+                ctx.drawImage(imgTanah, -cameraX * zoomLevel, yOffset, drawWidth, drawHeight);
+                ctx.drawImage(imgCaraBermain, -cameraX * zoomLevel, yOffset, drawWidth, drawHeight);
+                ctx.drawImage(imgRumahMisi, -cameraX * zoomLevel, yOffset, drawWidth, drawHeight);
+
+                if (imgMesinCapitLuar.complete) {
+                    ctx.drawImage(imgMesinCapitLuar, -cameraX * zoomLevel, yOffset, drawWidth, drawHeight);
+                }
+
+                if (gateOpened) {
+                    ctx.drawImage(imgSunflower, -cameraX * zoomLevel, yOffset, drawWidth, drawHeight);
+                } else {
+                    ctx.drawImage(imgGateTutup, -cameraX * zoomLevel, yOffset, drawWidth, drawHeight);
+                    ctx.drawImage(imgSunflower, -cameraX * zoomLevel, yOffset, drawWidth, drawHeight);
+                    if (isTouchingGate) { drawHelperTooltip("open the gate (Ent)", (480 - cameraX) * zoomLevel, yOffset + (drawHeight * 0.53)); }
+                }
+
+                if (isTouchingHouseDoor) { drawHelperTooltip("enter room (Ent)", ((houseDoorX + 110) - cameraX) * zoomLevel, yOffset + (drawHeight * 0.42)); }
+                
+                if (isTouchingClawMachineLuar) { 
+                    if (keyClawActive) {
+                        drawHelperTooltip("mainkan mesin capit (Ent)", (clawMachineX - cameraX) * zoomLevel, yOffset + (drawHeight * 0.45));
+                    } else {
+                        drawHelperTooltip("Gunakan Koin Anda di Mesin Capit 🪙", (clawMachineX - cameraX) * zoomLevel, yOffset + (drawHeight * 0.45));
+                    }
+                }
+
+                pX = (player.x - cameraX) * zoomLevel - (player.width * zoomLevel / 2);
+                pY = ((canvas.height * 0.8) - player.height) + (player.yOffset * zoomLevel) + (player.y * zoomLevel);
+                const currentImg = (player.dir === 'right') ? kucingKanan : kucingKiri;
+                ctx.drawImage(currentImg, pX, pY, player.width * zoomLevel, player.height * zoomLevel);
+
+                if (gateOpened) { ctx.drawImage(imgGateBuka, -cameraX * zoomLevel, yOffset, drawWidth, drawHeight); }
+                ctx.drawImage(imgJembatan, -cameraX * zoomLevel, yOffset, drawWidth, drawHeight);
+
+            } else if (currentScene === "dalam_rumah") {
+                ctx.drawImage(imgIsiRumahMisi, 0, 0, canvas.width, canvas.height);
+                ctx.drawImage(imgTV, 0, 0, canvas.width, canvas.height);
+                const vibration = tvOn ? (Math.sin(Date.now() / 150) * 3) : 2;
+                ctx.drawImage(imgSpeaker, 0, vibration, canvas.width, canvas.height);
+
+                if (tvOn) {
+                    photoFrameCounter++;
+                    if (photoFrameCounter > 60) { photoFrameCounter = 0; tvPhotoIndex = (tvPhotoIndex + 1) % 10; }
+                    const screenX = canvas.width * 0.214; const screenY = canvas.height * 0.343; 
+                    const screenW = canvas.width * 0.160; const screenH = canvas.height * 0.165; 
+                    
+                    if (tvPhotos[tvPhotoIndex] && tvPhotos[tvPhotoIndex].complete && tvPhotos[tvPhotoIndex].naturalWidth !== 0) {
+                        ctx.drawImage(tvPhotos[tvPhotoIndex], screenX, screenY, screenW, screenH);
+                    } else {
+                        ctx.fillStyle = "#333333"; ctx.fillRect(screenX, screenY, screenW, screenH);
+                        ctx.fillStyle = "#ffffff"; ctx.font = "bold 24px 'Courier New'"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+                        ctx.fillText("FOTO " + (tvPhotoIndex + 1), screenX + (screenW/2), screenY + (screenH/2));
+                    }
+                }
+
+                if (isTouchingTV) {
+                    const tooltipBaseX = canvas.width * 0.295; const tooltipBaseY = canvas.height * 0.25;
+                    drawHelperTooltip(tvOn ? "(O) Matikan TV" : "(O) Nyalakan TV", tooltipBaseX, tooltipBaseY);
+                    drawHelperTooltip("(P) Pilih Lagu", tooltipBaseX, tooltipBaseY + 30);
+                }
+
+                ctx.drawImage(imgRakPuzzle, 0, 0, canvas.width, canvas.height);
+                if (isTouchingRak && !isPuzzleActive) {
+                    drawHelperTooltip("(K) Buka Puzzle", canvas.width * 0.535, canvas.height * 0.50);
+                }
+
+                ctx.drawImage(imgRakFoto, 0, 0, canvas.width, canvas.height);
+                if (isTouchingRakFoto && !isPhotoActive) {
+                    drawHelperTooltip("(F) Urutkan Foto", canvas.width * 0.770, canvas.height * 0.40);
+                }
+
+                // Render Mesin Jendela Objek Photobooth Baru Di Dalam Rumah
+                if (imgPhotoboothObject.complete) {
+                    ctx.drawImage(imgPhotoboothObject, canvas.width * 0.43, -canvas.height * 0.05, canvas.width * 0.65, canvas.height * 1.05);
+                }
+                if (isTouchingPhotoboothDalam && !isPhotoboothOverlayActive) {
+                    drawHelperTooltip("(B) MASUK PHOTOBOOTH 📸", canvas.width * 0.930, canvas.height * 0.35);
+                }
+
+                pX = (player.x) * zoomLevel - (player.width * zoomLevel / 2);
+                pY = (canvas.height * 0.9) - (player.height * zoomLevel) + (player.y * zoomLevel);
+                const currentImg = (player.dir === 'right') ? kucingKanan : kucingKiri;
+                ctx.drawImage(currentImg, pX, pY, player.width * zoomLevel, player.height * zoomLevel);
+            }
+
+            // RENDERING ANIMASI LOVE GLOBAL
+            if (loveAnimation.active) {
+                ctx.save(); ctx.font = "bold 26px 'Courier New', monospace"; ctx.textAlign = "center";
+                const hxBase = pX + (player.width * zoomLevel / 2) + 25; const hyBase = pY + 20; 
+                loveAnimation.frameCounter++;
+                if (loveAnimation.hearts.length < 3 && loveAnimation.frameCounter === (loveAnimation.hearts.length * loveAnimation.heartAppearDelay) + 1) {
+                    let xShift = 0; 
+                    if (loveAnimation.hearts.length === 1) xShift = -35; 
+                    if (loveAnimation.hearts.length === 2) xShift = 35;  
+                    loveAnimation.hearts.push({ xOffset: xShift, yOffset: 0, alpha: 1.0, speed: 0.6, colorPulse: 0 });
+                }
+                let allHeartsGone = true;
+                for (let i = 0; i < loveAnimation.hearts.length; i++) {
+                    const h = loveAnimation.hearts[i];
+                    if (h.alpha > 0) {
+                        allHeartsGone = false; h.yOffset -= h.speed; h.alpha -= 0.015; h.colorPulse += 0.1;
+                        ctx.fillStyle = `rgba(${235 + Math.sin(h.colorPulse) * 20}, ${40 + Math.sin(h.colorPulse) * 40}, ${80 + Math.sin(h.colorPulse) * 40}, ${h.alpha})`;
+                        ctx.shadowColor = "#ffffff"; ctx.shadowBlur = 2;
+                        ctx.fillText("♥", hxBase + h.xOffset, hyBase + h.yOffset);
+                    }
+                }
+                if (allHeartsGone && loveAnimation.hearts.length === 3) {
+                    loveAnimation.loopCount++;
+                    if (loveAnimation.loopCount < loveAnimation.loopLimit) { loveAnimation.hearts = []; loveAnimation.frameCounter = 0; } 
+                    else { loveAnimation.active = false; loveAnimation.hearts = []; }
+                }
+                ctx.restore();
+            }
+
+            if (isClawPopupActive) { updateAndDrawClawMachineEngine(); }
+            requestAnimationFrame(loop);
+        }
+
+        // Engine Simulasi Mesin Capit
+        function updateGameClawLogic() {
+            let currentClawCenterX = 1320 + clawXOffset;
+            let currentClawTopY = 320 + cakarYAdj; 
+
+            if (cwGameState === "idle") {
+                if (keys.left || isLeftBtnClicked) {
+                    clawXOffset -= 8;
+                    if (clawXOffset < -450) clawXOffset = -450;
+                } else if (keys.right || isRightBtnClicked) {
+                    clawXOffset += 8;
+                    if (clawXOffset > 450) clawXOffset = 450;
+                }
+                mainClawYOffset = 0;
+                heartX = 1450;
+                heartY = 1250;
+                heartCaughtStatus = false;
+            }
+
+            if (cwGameState === "descending") {
+                mainClawYOffset += 12;
+                if (currentClawTopY + mainClawYOffset + (cakarHeight * 0.5) >= heartY) {
+                    cwGameState = "checking";
+                }
+            }
+
+            if (cwGameState === "checking") {
+                let centerHeartX = heartX + (hatiWidth / 2);
+                let matchDistance = Math.abs(currentClawCenterX - centerHeartX);
+
+                if (matchDistance < 100) {
+                    heartCaughtStatus = true;
+                    heartX = currentClawCenterX - (hatiWidth / 2) - 18;
+                    heartY = currentClawTopY + mainClawYOffset + (cakarHeight * 0.25);
+                    cwGameState = "ascending";
+                } else {
+                    heartCaughtStatus = false;
+                    cwGameState = "ascending";
+                }
+            }
+
+            if (cwGameState === "ascending") {
+                mainClawYOffset -= 12;
+                if (heartCaughtStatus) {
+                    heartX = currentClawCenterX - (hatiWidth / 2) - 18;
+                    heartY = currentClawTopY + mainClawYOffset + (cakarHeight * 0.25);
+                }
+                if (mainClawYOffset <= 0) {
+                    mainClawYOffset = 0;
+                    cwGameState = heartCaughtStatus ? "rewinding" : "idle";
+                }
+            }
+
+            if (cwGameState === "rewinding") {
+                clawXOffset -= 10;
+                if (heartCaughtStatus) {
+                    heartX = currentClawCenterX - (hatiWidth / 2) - 18;
+                    heartY = currentClawTopY + mainClawYOffset + (cakarHeight * 0.25);
+                }
+                if (clawXOffset <= -450) {
+                    clawXOffset = -450;
+                    cwGameState = "dropping";
+                }
+            }
+
+            if (cwGameState === "dropping") {
+                heartX = currentClawCenterX - (hatiWidth / 2) - 18;
+                heartY += 18;
+                if (heartY >= 1350) {
+                    heartY = 1350;
+                    isClawPopupActive = false;
+                    document.getElementById('clawMachinePopup').style.display = 'none';
+                    
+                    if (!keyClawActive) {
+                        triggerGlobalItemReward(3, "MISI CAPIT SELESAI! ✨🔑");
+                    } else {
+                        triggerGlobalItemReward(4, "KAMU BERHASIL LAGI! ✨💖");
+                    }
+                    startLoveAnimation(); 
+                }
+            }
+        }
+
+        function updateAndDrawClawMachineEngine() {
+            updateGameClawLogic();
+
+            if (imgMachine.complete && imgMain.complete && imgBar.complete && 
+                imgTumpukanHati.complete && imgLeftBtn.complete && imgRightBtn.complete && 
+                imgMainBtn.complete && imgClaw.complete && imgMainClaw.complete && 
+                imgHati.complete && imgOutBox.complete) {
+
+                clawCtx.drawImage(imgMachine, 0, 0, size, size);
+                clawCtx.drawImage(imgMain, 0, 0, size, size);
+
+                clawCtx.save();
+                if (keys.left || isLeftBtnClicked) clawCtx.translate(0, 15);
+                clawCtx.drawImage(imgLeftBtn, 0, 0, size, size);
+                clawCtx.restore();
+
+                clawCtx.save();
+                if (keys.right || isRightBtnClicked) clawCtx.translate(0, 15);
+                clawCtx.drawImage(imgRightBtn, 0, 0, size, size);
+                clawCtx.restore();
+
+                clawCtx.save();
+                if (cwGameState === "descending" || isMainBtnClicked) clawCtx.translate(0, 15);
+                clawCtx.drawImage(imgMainBtn, 0, 0, size, size);
+                clawCtx.restore();
+
+                clawCtx.drawImage(imgBar, 0, 0, size, size);
+                clawCtx.drawImage(imgTumpukanHati, 0, 0, size, size);
+
+                clawCtx.save();
+                if (heartCaughtStatus) {
+                    clawCtx.shadowColor = "#ff619b";
+                    clawCtx.shadowBlur = 80;
+                }
+                clawCtx.drawImage(imgHati, heartX, heartY, hatiWidth, hatiHeight);
+                clawCtx.restore();
+
+                clawCtx.save();
+                clawCtx.translate(clawXOffset, 0);
+                clawCtx.drawImage(imgClaw, 0, 0, size, size);
+                clawCtx.restore();
+
+                clawCtx.save();
+                clawCtx.translate(1320 + clawXOffset - (cakarWidth / 2), 320 + mainClawYOffset + cakarYAdj);
+                clawCtx.drawImage(imgMainClaw, 0, 0, cakarWidth, cakarHeight);
+                clawCtx.restore();
+
+                clawCtx.drawImage(imgOutBox, 0, 0, size, size);
+            }
+        }
+
+        function closeClawPopupContainer() {
+            document.getElementById('clawMachinePopup').style.display = 'none';
+            isClawPopupActive = false;
+            cwGameState = "idle";
+        }
+
+        clawCanvas.addEventListener('mousedown', (e) => {
+            if (cwGameState !== "idle") return;
+            const rect = clawCanvas.getBoundingClientRect();
+            const scaleX = size / rect.width;
+            const scaleY = size / rect.height;
+            const clickX = (e.clientX - rect.left) * scaleX;
+            const clickY = (e.clientY - rect.top) * scaleY;
+
+            if (clickX >= 700 && clickX <= 960 && clickY >= 2100 && clickY <= 2450) isLeftBtnClicked = true;
+            if (clickX >= 1050 && clickX <= 1300 && clickY >= 2100 && clickY <= 2450) isRightBtnClicked = true;
+            if (clickX >= 1550 && clickX <= 1950 && clickY >= 2100 && clickY <= 2450) {
+                isMainBtnClicked = true;
+                cwGameState = "descending";
+            }
+        });
+
+        window.addEventListener('mouseup', () => {
+            isLeftBtnClicked = false;
+            isRightBtnClicked = false;
+            isMainBtnClicked = false;
+        });
+
+        // Handler Keyboard Utama & Kondisi Khusus Masuk Overlay Photobooth
+        window.addEventListener('keydown', e => {
+            if (isPhotoboothOverlayActive) return; // Nonaktifkan pergerakan kucing jika di dalam photobooth
+            
+            if (e.key === 'ArrowLeft' || e.key === 'a') keys.left = true;
+            if (e.key === 'ArrowRight' || e.key === 'd') keys.right = true;
+            if (e.key === 'ArrowUp' || e.key === 'w' || e.key === ' ') keys.up = true;
+            
+            if (e.key === 'Enter') {
+                if (isPopupActive) {
+                    checkPin();
+                } else if (isClawPopupActive && cwGameState === "idle") {
+                    cwGameState = "descending";
+                } else if (currentScene === "luar" && isTouchingClawMachineLuar) {
+                    if (keyClawActive) {
+                        isClawPopupActive = true;
+                        cwGameState = "idle";
+                        document.getElementById('clawMachinePopup').style.display = 'flex';
+                    }
+                } else if (currentScene === "luar" && isTouchingHouseDoor) {
+                    currentScene = "dalam_rumah";
+                    player.x = 230; player.y = 0;
+                } else if (currentScene === "luar" && isTouchingGate) {
+                    openPinPopup();
+                }
+            }
+
+            if (currentScene === "dalam_rumah") {
+                if (isTouchingTV) {
+                    if (e.key.toLowerCase() === 'o') {
+                        tvOn = !tvOn;
+                        if (tvOn) { playSong(1); } else { document.getElementById('bgmAudioActual').pause(); updateCatalogUI(); }
+                    }
+                    if (e.key.toLowerCase() === 'p') {
+                        const panel = document.getElementById('songPanel');
+                        panel.style.display = (panel.style.display === 'block') ? 'none' : 'block';
+                        updateCatalogUI();
+                    }
+                }
+
+                if (isTouchingRak && e.key.toLowerCase() === 'k') {
+                    isPuzzleActive = !isPuzzleActive;
+                    if (isPuzzleActive) {
+                        closePhotoGame();
+                        document.getElementById('puzzlePopup').style.display = 'flex';
+                        initPuzzleGame(); 
+                    } else { closePuzzleGame(); }
+                }
+
+                if (isTouchingRakFoto && e.key.toLowerCase() === 'f') {
+                    isPhotoActive = !isPhotoActive;
+                    if (isPhotoActive) {
+                        closePuzzleGame();
+                        document.getElementById('photoPopup').style.display = 'flex';
+                        initPhotoGame();
+                    } else { closePhotoGame(); }
+                }
+
+                // PEMICU BARU: KLIK B UNTUK MEMBUKA OVERLAY PHOTOBOOTH
+                if (isTouchingPhotoboothDalam && e.key.toLowerCase() === 'b') {
+                    openPhotoboothInterface();
+                }
+            }
+            
+            if (e.key === 'Escape' && currentScene === "dalam_rumah" && isPuzzleFinishedGlobal && isPhotoFinishedGlobal) { exitHouse(); }
+        });
+
+        window.addEventListener('keyup', e => {
+            if (e.key === 'ArrowLeft' || e.key === 'a') keys.left = false;
+            if (e.key === 'ArrowRight' || e.key === 'd') keys.right = false;
+            if (e.key === 'ArrowUp' || e.key === 'w' || e.key === ' ') keys.up = false;
+        });
+
+        // Mini-Game Puzzle
+        function closePuzzleGame() {
+            document.getElementById('puzzlePopup').style.display = 'none';
+            isPuzzleActive = false;
+        }
+
+        function initPuzzleGame() {
+            const targetGrid = document.getElementById('puzzleGridTarget');
+            const poolBottom = document.getElementById('puzzlePiecesPool');
+            const boardLeft = document.getElementById('puzzleBoard');
+            
+            targetGrid.innerHTML = '';
+            poolBottom.innerHTML = '';
+            const oldPieces = boardLeft.querySelectorAll('.draggable-piece');
+            oldPieces.forEach(p => p.remove());
+
+            for (let i = 1; i <= 16; i++) {
+                let slot = document.createElement('div');
+                slot.className = 'grid-slot';
+                slot.id = "puzzleTargetSlot_" + i;
+                slot.innerText = "Petak " + i;
+                targetGrid.appendChild(slot);
+            }
+
+            if (isPuzzleFinishedGlobal) {
+                document.getElementById('btnCekPuzzle').style.display = 'none';
+                for (let i = 1; i <= 16; i++) {
+                    let img = document.createElement('img');
+                    img.className = 'draggable-piece';
+                    img.src = `Pisahan ${i}.png`;
+                    img.style.left = '0px';
+                    img.style.top = '0px';
+                    img.style.transform = 'scale(1)';
+                    img.style.position = 'absolute';
+                    document.getElementById("puzzleTargetSlot_" + i).appendChild(img);
+                }
+                return;
+            }
+
+            for (let i = 1; i <= 16; i++) {
+                let img = document.createElement('img');
+                img.className = 'draggable-piece';
+                img.src = `Pisahan ${i}.png`;
+                img.setAttribute('data-id', i);
+                img.style.left = Math.floor(Math.random() * (1180 - 160)) + 'px';
+                img.style.top = Math.floor(Math.random() * (210 - 110)) + 'px';
+                img.style.transform = 'scale(0.395)';
+                setupDragElementPuzzle(img);
+                poolBottom.appendChild(img);
+            }
+        }
+
+        function setupDragElementPuzzle(elmnt) {
+            let offsetX = 0, offsetY = 0;
+            let currentMouseX = 0, currentMouseY = 0;
+            elmnt.onmousedown = dragMouseDown;
+
+            function dragMouseDown(e) {
+                e = e || window.event;
+                e.preventDefault();
+                let r = elmnt.getBoundingClientRect();
+                offsetX = e.clientX - r.left;
+                offsetY = e.clientY - r.top;
+                document.getElementById('puzzlePopup').appendChild(elmnt);
+                elmnt.style.zIndex = "9999";
+                elmnt.style.transform = 'scale(0.395)'; 
+                let pr = document.getElementById('puzzlePopup').getBoundingClientRect();
+                elmnt.style.left = (e.clientX - pr.left - offsetX) + "px";
+                elmnt.style.top = (e.clientY - pr.top - offsetY) + "px";
+                currentMouseX = e.clientX;
+                currentMouseY = e.clientY;
+                document.onmouseup = closeDragElement;
+                document.onmousemove = elementDrag;
+            }
+
+            function elementDrag(e) {
+                e = e || window.event;
+                e.preventDefault();
+                let pr = document.getElementById('puzzlePopup').getBoundingClientRect();
+                elmnt.style.left = (e.clientX - pr.left - offsetX) + "px";
+                elmnt.style.top = (e.clientY - pr.top - offsetY) + "px";
+                currentMouseX = e.clientX;
+                currentMouseY = e.clientY;
+            }
+
+            function closeDragElement() {
+                document.onmouseup = null;
+                document.onmousemove = null;
+                let snapped = false;
+
+                for (let i = 1; i <= 16; i++) {
+                    const slotEl = document.getElementById("puzzleTargetSlot_" + i);
+                    const sb = slotEl.getBoundingClientRect();
+
+                    if (currentMouseX >= sb.left && currentMouseX <= sb.right &&
+                        currentMouseY >= sb.top && currentMouseY <= sb.bottom) {
+                        
+                        if (slotEl.children.length > 0 && slotEl.children[0] !== elmnt) {
+                            let oldImg = slotEl.children[0];
+                            document.getElementById('puzzlePiecesPool').appendChild(oldImg);
+                            oldImg.style.position = 'absolute';
+                            oldImg.style.transform = 'scale(0.395)';
+                            oldImg.style.left = Math.floor(Math.random() * (1180 - 160)) + 'px';
+                            oldImg.style.top = Math.floor(Math.random() * (210 - 110)) + 'px';
+                        }
+
+                        slotEl.appendChild(elmnt);
+                        elmnt.style.position = 'absolute';
+                        elmnt.style.transform = 'scale(1)';
+                        elmnt.style.left = '0px';
+                        elmnt.style.top = '0px';
+                        elmnt.style.zIndex = "10";
+                        snapped = true;
+                        break;
+                    }
+                }
+
+                if (!snapped) {
+                    const poolEl = document.getElementById('puzzlePiecesPool');
+                    poolEl.appendChild(elmnt);
+                    elmnt.style.position = 'absolute';
+                    elmnt.style.transform = 'scale(0.395)';
+                    const pb = elmnt.getBoundingClientRect();
+                    const plb = poolEl.getBoundingClientRect();
+                    let dropX = pb.left - plb.left;
+                    let dropY = pb.top - plb.top;
+                    if (dropX < 0) dropX = 0; if (dropX > 1180 - 158) dropX = 1180 - 158;
+                    if (dropY < 0) dropY = 0; if (dropY > 210 - 105) dropY = 210 - 105;
+                    elmnt.style.left = dropX + "px";
+                    elmnt.style.top = dropY + "px";
+                    elmnt.style.zIndex = "10";
+                }
+            }
+        }
+
+        function checkPuzzleSolution() {
+            let totalPlaced = 0;
+            let isCorrect = true;
+            for (let i = 1; i <= 16; i++) {
+                const slotEl = document.getElementById("puzzleTargetSlot_" + i);
+                if (slotEl && slotEl.children.length > 0) {
+                    totalPlaced++;
+                    let pieceId = parseInt(slotEl.children[0].getAttribute('data-id'));
+                    if (pieceId !== i) isCorrect = false;
+                }
+            }
+            if (totalPlaced < 16) {
+                showCustomAlert("Letakkan semua 16 kepingan puzzle ke semua kotak target terlebih dahulu!");
+                return;
+            }
+            if (isCorrect) {
+                isPuzzleFinishedGlobal = true; 
+                closePuzzleGame();
+                triggerGlobalItemReward(1, "PUZZLE SELESAI! ✨💰");
+                startLoveAnimation(); 
+            } else {
+                showCustomAlert("Hmm, susunan gambarnya masih ada yang keliru. Cek lagi ya!");
+            }
+        }
+
+        // Mini-Game Album Foto
+        function closePhotoGame() {
+            document.getElementById('photoPopup').style.display = 'none';
+            isPhotoActive = false;
+        }
+
+        function initPhotoGame() {
+            const slotsRow = document.getElementById('photoSlotsRowTarget');
+            const poolRow = document.getElementById('photoPiecesPoolHorizontal');
+            slotsRow.innerHTML = '';
+            poolRow.innerHTML = '';
+
+            for (let i = 1; i <= 9; i++) {
+                let wrapper = document.createElement('div');
+                wrapper.className = 'photo-slot-wrapper';
+                let title = document.createElement('div');
+                title.className = 'photo-slot-title';
+                title.innerText = "Momen " + i;
+                let slot = document.createElement('div');
+                slot.className = 'photo-target-slot';
+                slot.id = "photoTargetSlot_" + i;
+                wrapper.appendChild(title);
+                wrapper.appendChild(slot);
+                slotsRow.appendChild(wrapper);
+            }
+
+            if (isPhotoFinishedGlobal) {
+                document.getElementById('btnCekPhoto').style.display = 'none';
+                for (let i = 1; i <= 9; i++) {
+                    let img = document.createElement('img');
+                    img.className = 'draggable-photo-item';
+                    img.src = `URUT FT${i}.jpg`;
+                    img.style.position = 'static'; 
+                    img.style.cursor = 'default';
+                    document.getElementById("photoTargetSlot_" + i).appendChild(img);
+                }
+                return;
+            }
+
+            document.getElementById('btnCekPhoto').style.display = 'block';
+            let indices = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+            indices.sort(() => Math.random() - 0.5);
+
+            for (let i = 0; i < 9; i++) {
+                let id = indices[i];
+                let img = document.createElement('img');
+                img.className = 'draggable-photo-item';
+                img.src = `URUT FT${id}.jpg`;
+                img.setAttribute('data-id', id);
+                img.style.left = (70 + (i * 115)) + 'px';
+                img.style.top = '15px';
+                setupDragElementPhotoHorizontal(img);
+                poolRow.appendChild(img);
+            }
+        }
+
+        function setupDragElementPhotoHorizontal(elmnt) {
+            let offsetX = 0, offsetY = 0;
+            let currentMouseX = 0, currentMouseY = 0;
+            elmnt.onmousedown = dragMouseDown;
+
+            function dragMouseDown(e) {
+                e = e || window.event;
+                e.preventDefault();
+                let r = elmnt.getBoundingClientRect();
+                offsetX = e.clientX - r.left;
+                offsetY = e.clientY - r.top;
+                document.getElementById('photoPopup').appendChild(elmnt);
+                elmnt.style.zIndex = "9999";
+                let pr = document.getElementById('photoPopup').getBoundingClientRect();
+                elmnt.style.left = (e.clientX - pr.left - offsetX) + "px";
+                elmnt.style.top = (e.clientY - pr.top - offsetY) + "px";
+                currentMouseX = e.clientX;
+                currentMouseY = e.clientY;
+                document.onmouseup = closeDragElement;
+                document.onmousemove = elementDrag;
+            }
+
+            function elementDrag(e) {
+                e = e || window.event;
+                e.preventDefault();
+                let pr = document.getElementById('photoPopup').getBoundingClientRect();
+                elmnt.style.left = (e.clientX - pr.left - offsetX) + "px";
+                elmnt.style.top = (e.clientY - pr.top - offsetY) + "px";
+                currentMouseX = e.clientX;
+                currentMouseY = e.clientY;
+            }
+
+            function closeDragElement() {
+                document.onmouseup = null;
+                document.onmousemove = null;
+                elmnt.style.zIndex = "10";
+                let snapped = false;
+
+                for (let i = 1; i <= 9; i++) {
+                    const slotEl = document.getElementById("photoTargetSlot_" + i);
+                    const sb = slotEl.getBoundingClientRect();
+
+                    if (currentMouseX >= sb.left && currentMouseX <= sb.right &&
+                        currentMouseY >= sb.top && currentMouseY <= sb.bottom) {
+                        
+                        if (slotEl.children.length > 0 && slotEl.children[0] !== elmnt) {
+                            let oldImg = slotEl.children[0];
+                            document.getElementById('photoPiecesPoolHorizontal').appendChild(oldImg);
+                            oldImg.style.position = 'absolute';
+                            oldImg.style.left = Math.floor(Math.random() * 900) + 50 + 'px';
+                            oldImg.style.top = '15px';
+                        }
+                        slotEl.appendChild(elmnt);
+                        elmnt.style.position = 'absolute';
+                        elmnt.style.left = '0px';
+                        elmnt.style.top = '0px';
+                        snapped = true;
+                        break;
+                    }
+                }
+
+                if (!snapped) {
+                    document.getElementById('photoPiecesPoolHorizontal').appendChild(elmnt);
+                    elmnt.style.position = 'absolute';
+                    const poolEl = document.getElementById('photoPiecesPoolHorizontal');
+                    const pb = elmnt.getBoundingClientRect();
+                    const plb = poolEl.getBoundingClientRect();
+                    let dropX = pb.left - plb.left;
+                    let dropY = pb.top - plb.top;
+                    if (dropX < 0) dropX = 0; if (dropX > 1160 - 110) dropX = 1160 - 110;
+                    if (dropY < 0) dropY = 0; if (dropY > 140 - 110) dropY = 140 - 110;
+                    elmnt.style.left = dropX + "px";
+                    elmnt.style.top = dropY + "px";
+                }
+            }
+        }
+
+        function checkPhotoSolution() {
+            let totalPlaced = 0;
+            let isCorrect = true;
+            for (let i = 1; i <= 9; i++) {
+                const slotEl = document.getElementById("photoTargetSlot_" + i);
+                if (slotEl && slotEl.children.length > 0) {
+                    totalPlaced++;
+                    let photoId = parseInt(slotEl.children[0].getAttribute('data-id'));
+                    if (photoId !== i) isCorrect = false;
+                }
+            }
+            if (totalPlaced < 9) {
+                showCustomAlert("Susun ke-9 foto kenangan ke semua kotak target Momen terlebih dahulu!");
+                return;
+            }
+            if (isCorrect) {
+                isPhotoFinishedGlobal = true;
+                closePhotoGame();
+                triggerGlobalItemReward(2, "ALBUM FOTO SELESAI! ✨💖");
+                startLoveAnimation(); 
+            } else {
+                showCustomAlert("Urutan kronologi fotonya masih ada yang tertukar. Coba cek lagi alur ceritanya!");
+            }
+        }
+
+        // Global Item Reward Manager
+        function triggerGlobalItemReward(itemNumber, titleText) {
+            document.getElementById('successMainTitle').innerText = titleText;
+            const textPopup = document.getElementById('successTextPopup');
+            textPopup.style.display = 'block';
+
+            let targetEl;
+            if (itemNumber === 1) { targetEl = document.getElementById('coinReward1'); coin1Active = true; }
+            else if (itemNumber === 2) { targetEl = document.getElementById('coinReward2'); coin2Active = true; }
+            else if (itemNumber === 3) { targetEl = document.getElementById('keyRewardClaw'); keyClawActive = true; }
+            else if (itemNumber === 4) { targetEl = document.getElementById('rafizaRewardClaw'); }
+
+            targetEl.style.display = 'block';
+            targetEl.style.top = '50%';
+            targetEl.style.left = '50%';
+
+            if (itemNumber === 4) {
+                targetEl.style.animation = 'rafizaZoomScreen 1.5s ease-in-out forwards';
+            } else {
+                targetEl.style.animation = 'coinZoomScreenInAndOut 1.5s ease-in-out forwards';
+            }
+
+            setTimeout(() => {
+                targetEl.style.animation = ''; 
+                textPopup.style.display = 'none'; 
+                
+                if (itemNumber !== 4) {
+                    rearrangeItemsLayout(); 
+                    targetEl.style.animation = 'coinBounceTwice 0.6s ease-out 2';
+                    setTimeout(() => {
+                        targetEl.style.animation = '';
+                        makeElementDraggable(targetEl, itemNumber); 
+                    }, 1200);
+                } else {
+                    targetEl.style.display = 'none';
+                    resetClawMachineGameplayState();
+                }
+            }, 1500);
+        }
+
+        function rearrangeItemsLayout() {
+            let activeElements = [];
+            if (coin1Active) activeElements.push(document.getElementById('coinReward1'));
+            if (coin2Active) activeElements.push(document.getElementById('coinReward2'));
+            if (keyClawActive) activeElements.push(document.getElementById('keyRewardClaw'));
+
+            activeElements.forEach((itemEl, index) => {
+                itemEl.style.top = 'calc(100vh - 170px)';
+                itemEl.style.left = (-45 + (index * 80)) + 'px';
+                itemEl.style.transform = 'scale(0.3)';
+            });
+        }
+
+        function makeElementDraggable(elmnt, itemNumber) {
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            elmnt.onmousedown = dragMouseDown;
+
+            function dragMouseDown(e) {
+                e = e || window.event;
+                e.preventDefault();
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                document.onmouseup = closeDragElement;
+                document.onmousemove = elementDrag;
+            }
+
+            function elementDrag(e) {
+                e = e || window.event;
+                e.preventDefault();
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+                elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+            }
+
+            function closeDragElement() {
+                document.onmouseup = null;
+                document.onmousemove = null;
+                let currentMouseX = pos3;
+                let currentMouseY = pos4;
+
+                if (currentScene === "luar" && !keyClawActive && (itemNumber === 1 || itemNumber === 2)) {
+                    let screenClawX = (clawMachineX - cameraX) * zoomLevel;
+                    let screenClawY = (canvas.height * 0.8) - 50; 
+
+                    if (currentMouseX >= screenClawX - 150 && currentMouseX <= screenClawX + 150 &&
+                        currentMouseY >= screenClawY - 250 && currentMouseY <= screenClawY + 250) {
+                        
+                        elmnt.style.display = 'none';
+                        if (itemNumber === 1) coin1Active = false; 
+                        else if (itemNumber === 2) coin2Active = false;
+                        
+                        isClawPopupActive = true;
+                        cwGameState = "idle";
+                        document.getElementById('clawMachinePopup').style.display = 'flex';
+                    }
+                }
+                rearrangeItemsLayout(); 
+            }
+        }
+
+
+        /* ==========================================================================
+           ENGINE LOGIC UTAT-ATIK UTAMA COUPLING DUAL-CORE PHOTOBOOTH SYSTEM
+           ========================================================================== */
         const video = document.getElementById('pbVideo');
         const countdownEl = document.getElementById('pbCountdown');
         const statusEl = document.getElementById('pbLiveStatus');
@@ -194,6 +1623,26 @@
         let maxPhotosCount = 3;
         let isRetakeActive = false;
         let retakeTargetIdx = null;
+
+        function openPhotoboothInterface() {
+            isPhotoboothOverlayActive = true;
+            keys.left = false; keys.right = false; keys.up = false; // Freeze status kucing
+            document.getElementById('masterPhotoboothUI').style.display = 'flex';
+            initCamera();
+        }
+
+        function closePhotoboothInterface() {
+            isPhotoboothOverlayActive = false;
+            document.getElementById('masterPhotoboothUI').style.display = 'none';
+            clearInterval(canvasRenderInterval);
+            clearInterval(uiLiveLoopInterval);
+            
+            // Turn off camera stream to save resource
+            if(video.srcObject) {
+                video.srcObject.getTracks().forEach(track => track.stop());
+                video.srcObject = null;
+            }
+        }
 
         async function initCamera() {
             try {
@@ -335,7 +1784,6 @@
             const dataUri = tempCanvas.toDataURL('image/png');
 
             photosArray[activeIdx] = dataUri;
-            
             renderWorkspaceDOM();
 
             if(!isRetakeActive) {
@@ -412,7 +1860,6 @@
         function drawImageProporsional(ctx, img, dx, dy, dWidth, dHeight) {
             let imgW = img.width;
             let imgH = img.height;
-            
             let sWidth = imgW;
             let sHeight = imgW * (dHeight / dWidth);
             
@@ -420,16 +1867,13 @@
                 sHeight = imgH;
                 sWidth = imgH * (dWidth / dHeight);
             }
-            
             let sx = (imgW - sWidth) / 2;
             let sy = (imgH - sHeight) / 2;
-            
             ctx.drawImage(img, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
         }
 
         function triggerRetakeProcess(index) {
             if (photosArray.includes(null) && !isRetakeActive) return;
-
             clearInterval(uiLiveLoopInterval);
 
             for(let i=0; i<6; i++) {
@@ -452,7 +1896,6 @@
         function toggleControls(show) {
             document.getElementById('btnActionStart').style.display = show ? 'inline-block' : 'none';
             btnDownload.style.display = show ? 'inline-block' : 'none';
-            
             if(show) {
                 previewToggleBar.style.display = 'flex';
                 isRetakeActive = false;
@@ -465,7 +1908,6 @@
             try {
                 btnDownload.disabled = true;
                 btnDownload.innerText = "⏳ SEDANG MEMPROSES PACK...";
-
                 const zip = new JSZip();
                 
                 for (let i = 0; i < maxPhotosCount; i++) {
@@ -481,17 +1923,15 @@
                     exportCanvas.width = 1200;
                     exportCanvas.height = 1600;
                     const ctxNP = exportCanvas.getContext('2d');
-
                     let bgImageObj = await loadImageAsync("PB NEWSPAPER.png");
 
                     ctxNP.fillStyle = "#ffffff";
                     ctxNP.fillRect(0, 0, 1200, 1600);
-                    
                     if(photosArray[0]) drawImageProporsional(ctxNP, await loadImageAsync(photosArray[0]), 70, 595, 1060, 520);
                     if(photosArray[1]) drawImageProporsional(ctxNP, await loadImageAsync(photosArray[1]), 755, 1135, 380, 240);
                     if(photosArray[2]) drawImageProporsional(ctxNP, await loadImageAsync(photosArray[2]), 70, 1380, 340, 200);
-                    
                     ctxNP.drawImage(bgImageObj, 0, 0, 1200, 1600);
+                    
                     const npBase64 = exportCanvas.toDataURL('image/png').split(',')[1];
                     zip.file("romantic-newspaper-edition.png", npBase64, {base64: true});
 
@@ -506,7 +1946,6 @@
                             resolve();
                         };
                     });
-
                     recorder.start();
                     for (let f = 0; f < 50; f++) {
                         ctxNP.fillStyle = "#ffffff"; ctxNP.fillRect(0, 0, 1200, 1600);
@@ -523,18 +1962,15 @@
                     exportCanvas.width = 1200;
                     exportCanvas.height = 1800;
                     const ctxPS = exportCanvas.getContext('2d');
-
                     let framePath = (activeSubFrameIdx === 1) ? "PB PHOTOSTRIP 1.png" : "PB PHOTOSTRIP 2.png";
                     let stripFrameObj = await loadImageAsync(framePath);
 
                     async function renderStripDynamicTimeline(frameCounter) {
                         ctxPS.fillStyle = "#ffffff";
                         ctxPS.fillRect(0, 0, 1200, 1800);
-
                         for (let i = 0; i < 6; i++) {
                             let posX = (i < 3) ? 38 : 638;
                             let posY = 176 + ((i % 3) * 410);
-                            
                             if(frameCounter === null) {
                                 if (photosArray[i]) drawImageProporsional(ctxPS, await loadImageAsync(photosArray[i]), posX, posY, 524, 392);
                             } else {
@@ -542,7 +1978,6 @@
                                 if(fBuf && fBuf.length > 0) drawImageProporsional(ctxPS, fBuf[frameCounter % fBuf.length], posX, posY, 524, 392);
                             }
                         }
-
                         ctxPS.drawImage(stripFrameObj, 0, 0, 1200, 1800);
                     }
 
@@ -561,7 +1996,6 @@
                             resolve();
                         };
                     });
-
                     recorder.start();
                     for (let f = 0; f < 50; f++) {
                         await renderStripDynamicTimeline(f);
@@ -595,7 +2029,8 @@
             });
         }
 
-        window.onload = initCamera;
+        // Jalankan daur frame pertama kali
+        loop();
     </script>
 </body>
 </html>
