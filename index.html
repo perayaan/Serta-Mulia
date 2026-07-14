@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aesthetic Studio - Master Balanced Engine</title>
+    <title>Aesthetic Studio - Master Dual Photo Strip Engine</title>
     <!-- Library untuk membungkus output menjadi berkas ZIP tunggal -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
@@ -25,7 +25,7 @@
         .camera-block-card h3 { color: #b56b72; margin-top: 0; font-size: 20px; font-weight: 900; }
         .camera-block-card p { font-size: 14px; color: #555; font-weight: bold; margin-bottom: 20px; line-height: 1.5; }
 
-        /* WORKSPACE UTAMA SEJAJAR PERFECT ALIGNMENT */
+        /* WORKSPACE UTAMA SEJAJAR */
         .pb-main-workspace-layout { display: flex; padding: 25px; gap: 25px; background: #fff5f6; box-sizing: border-box; justify-content: center; align-items: stretch; }
         
         /* SISI KIRI STACK KONTROL KAMERA & PANDUAN & BUTTON FRAME */
@@ -38,7 +38,7 @@
         /* TEKS PANDUAN RINGKAS */
         .pb-notice-board { background: #fffdf5; border: 2px dashed #ffb3ba; font-size: 11.5px; font-weight: bold; color: #b56b72; padding: 12px 18px; line-height: 1.6; border-radius: 6px; box-sizing: border-box; text-align: left; }
 
-        /* PANEL SUB-SELEKSI FRAME SEKARANG DI KIRI (RATA TENGAH MURNI) */
+        /* PANEL SUB-SELEKSI FRAME (RATA TENGAH MURNI) */
         .pb-subframe-selector-bar { display: none; gap: 12px; justify-content: center; align-items: center; width: 100%; margin-top: 2px; }
         .subframe-btn { background: #fff5f6; color: #b56b72; border: 2px solid #db939a; padding: 6px 20px; font-size: 11px; font-weight: bold; cursor: pointer; border-radius: 4px; text-transform: uppercase; box-shadow: 2px 2px 0px rgba(0,0,0,0.05); transition: 0.1s; }
         .subframe-btn.active { background: #ffb3ba; color: white; }
@@ -72,7 +72,7 @@
 <body>
 
     <div class="pb-window">
-        <div class="pb-titlebar">Aesthetic Hybrid Studio Terminal - Optimized Layout</div>
+        <div class="pb-titlebar">Aesthetic Hybrid Studio Terminal - Dual Photo Strip Engine</div>
         
         <!-- POP-UP OTOMATIS JIKA KAMERA BELUM DIIZINKAN -->
         <div id="cameraLockOverlay" class="camera-block-overlay">
@@ -111,7 +111,7 @@
                     4. <b>DOWNLOAD FOTO</b>: Klik tombol unduh berkas untuk menyimpan paket berkas foto & video.
                 </div>
 
-                <!-- MENU SUB-BAR FRAME NYATU DI SISI KIRI (RATA TENGAH PRECISI) -->
+                <!-- MENU SUB-BAR FRAME NYATU DI SISI KIRI -->
                 <div id="subframeBar" class="pb-subframe-selector-bar">
                     <button id="subBtn1" class="subframe-btn active" onclick="changeSubFrameSelection(1)">🖼️ FRAME 1</button>
                     <button id="subBtn2" class="subframe-btn" onclick="changeSubFrameSelection(2)">🖼️ FRAME 2</button>
@@ -141,7 +141,7 @@
                     <div class="ps-slot" id="psSlot_4" style="top:32.6%; left:53.2%; width:43.6%; height:21.8%;" onclick="triggerRetakeProcess(4)"></div>
                     <div class="ps-slot" id="psSlot_5" style="top:55.4%; left:53.2%; width:43.6%; height:21.8%;" onclick="triggerRetakeProcess(5)"></div>
                     
-                    <img id="psFrameImageElement" class="ps-bg-frame-img" src="PB PHOTOSTRIP 1.png" alt="Photo Strip Frame">
+                    <img id="psFrameImageElement" class="ps-bg-frame-img" src="PB PHOTOSTRIP 1.png" alt="Photo Strip Frame" onerror="this.style.background='#eee';">
                 </div>
 
             </div>
@@ -222,10 +222,8 @@
             
             if(frameIdx === 1) {
                 psFrameImageElement.src = "PB PHOTOSTRIP 1.png";
-                psFrameImageElement.style.background = "none";
             } else {
-                psFrameImageElement.removeAttribute('src');
-                psFrameImageElement.style.background = "linear-gradient(135deg, #ffe5ec 0%, #c9e4de 100%)";
+                psFrameImageElement.src = "PB PHOTOSTRIP 2.png";
             }
         }
 
@@ -327,6 +325,7 @@
             }
         }
 
+        // Penanganan slicing tangkapan murni tanpa melar/distorsi
         function drawAbsoluteRasio169(ctx, img, x, y, targetW, targetH) {
             let imgWidth = img.videoWidth || 1280;
             let imgHeight = img.videoHeight || 720;
@@ -451,25 +450,20 @@
                     await recordPromise;
 
                 } else {
+                    // KONSTRUKSI EKSPOR RENDERING DUAL PHOTO STRIP ASLI
                     exportCanvas.width = 1200;
                     exportCanvas.height = 1800;
                     const ctxPS = exportCanvas.getContext('2d');
 
-                    let stripFrameObj = null;
-                    if(activeSubFrameIdx === 1) {
-                        try { stripFrameObj = await loadImageAsync("PB PHOTOSTRIP 1.png"); } catch(e) { console.error("File PB PHOTOSTRIP 1.png missing."); }
-                    }
+                    // Muat aset bingkai dinamis sesuai indeks pilihan aktif
+                    let framePath = (activeSubFrameIdx === 1) ? "PB PHOTOSTRIP 1.png" : "PB PHOTOSTRIP 2.png";
+                    let stripFrameObj = await loadImageAsync(framePath);
 
                     async function renderStripDynamicTimeline(frameCounter) {
                         ctxPS.fillStyle = "#ffffff";
                         ctxPS.fillRect(0, 0, 1200, 1800);
 
-                        if(activeSubFrameIdx === 2) {
-                            let grad = ctxPS.createLinearGradient(0, 0, 1200, 1800);
-                            grad.addColorStop(0, '#ffe5ec'); grad.addColorStop(1, '#c9e4de');
-                            ctxPS.fillStyle = grad; ctxPS.fillRect(0, 0, 1200, 1800);
-                        }
-
+                        // LAPISAN BELAKANG: Gambar ke-6 foto
                         for (let i = 0; i < 6; i++) {
                             let posX = (i < 3) ? 38 : 638;
                             let posY = 176 + ((i % 3) * 410);
@@ -482,18 +476,16 @@
                             }
                         }
 
-                        if(activeSubFrameIdx === 1 && stripFrameObj) {
-                            ctxPS.drawImage(stripFrameObj, 0, 0, 1200, 1800);
-                        } else if(activeSubFrameIdx === 2) {
-                            ctxPS.lineWidth = 10; ctxPS.strokeStyle = "#db939a"; ctxPS.strokeRect(5, 5, 1190, 1790);
-                            ctxPS.beginPath(); ctxPS.moveTo(600,0); ctxPS.lineTo(600,1800); ctxPS.stroke();
-                        }
+                        // LAPISAN DEPAN: Timpa template bingkai PNG di atasnya
+                        ctxPS.drawImage(stripFrameObj, 0, 0, 1200, 1800);
                     }
 
+                    // Ekspor berkas cetak PNG
                     await renderStripDynamicTimeline(null);
                     const psBase64 = exportCanvas.toDataURL('image/png').split(',')[1];
                     zip.file(`premium-photostrip-frame-${activeSubFrameIdx}.png`, psBase64, {base64: true});
 
+                    // Ekspor animasi video WebM
                     const videoStream = exportCanvas.captureStream(15);
                     const chunks = [];
                     const recorder = new MediaRecorder(videoStream, { mimeType: 'video/webm;codecs=vp8', videoBitsPerSecond: 6000000 });
@@ -533,7 +525,7 @@
             return new Promise((resolve, reject) => {
                 const img = new Image();
                 img.onload = () => resolve(img);
-                img.onerror = () => reject(new Error("Gagal memuat: " + src));
+                img.onerror = () => reject(new Error("Gagal memuat berkas gambar di path: " + src));
                 img.src = src;
             });
         }
