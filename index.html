@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aesthetic Studio - Master Photo Strip Engine</title>
+    <title>Aesthetic Studio - Photo Strip Layer Engine Fixed</title>
     <!-- Library untuk membungkus output menjadi berkas ZIP tunggal -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
@@ -167,7 +167,7 @@
         const psFrameImageElement = document.getElementById('psFrameImageElement');
         
         let activeAppMode = 'newspaper';
-        let activeSubFrameIdx = 1; // Default Pilihan Frame 1
+        let activeSubFrameIdx = 1; 
         let photosArray = [];
         let videoFramesBuffer = []; 
         
@@ -205,6 +205,7 @@
                 subframeBar.style.display = 'none';
                 maxPhotosCount = 3;
             } else {
+                npView.style.display = 'block'; // Fallback layout sizing helper
                 npView.style.display = 'none';
                 psView.style.display = 'block';
                 subframeBar.style.display = 'flex';
@@ -223,7 +224,6 @@
                 psFrameImageElement.src = "PB PHOTOSTRIP 1.png";
                 psFrameImageElement.style.background = "none";
             } else {
-                // Frame 2 ala-ala menggunakan background gradasi pastel solid estetik sebelum gambar jadi
                 psFrameImageElement.removeAttribute('src');
                 psFrameImageElement.style.background = "linear-gradient(135deg, #ffe5ec 0%, #c9e4de 100%)";
             }
@@ -451,7 +451,6 @@
                     await recordPromise;
 
                 } else {
-                    // MODE PHOTO STRIP PREMIUM SEPASANG (1200 x 1800 HD Output)
                     exportCanvas.width = 1200;
                     exportCanvas.height = 1800;
                     const ctxPS = exportCanvas.getContext('2d');
@@ -471,37 +470,30 @@
                             ctxPS.fillStyle = grad; ctxPS.fillRect(0, 0, 1200, 1800);
                         }
 
-                        // LAPISAN BELAKANG: Gambar 6 Slot Foto/Video secara berurutan
                         for (let i = 0; i < 6; i++) {
                             let posX = (i < 3) ? 38 : 638;
                             let posY = 176 + ((i % 3) * 410);
                             
                             if(frameCounter === null) {
-                                // Render Cetak Cetakan Gambar Statis PNG
                                 if (photosArray[i]) drawImageProporsional(ctxPS, await loadImageAsync(photosArray[i]), posX, posY, 524, 392);
                             } else {
-                                // Render Array Frame Buffer Video WebM Animasi
                                 const fBuf = videoFramesBuffer[i];
                                 if(fBuf && fBuf.length > 0) drawImageProporsional(ctxPS, fBuf[frameCounter % fBuf.length], posX, posY, 524, 392);
                             }
                         }
 
-                        // LAPISAN DEPAN: Timpa Frame Utama diatasnya
                         if(activeSubFrameIdx === 1 && stripFrameObj) {
                             ctxPS.drawImage(stripFrameObj, 0, 0, 1200, 1800);
                         } else if(activeSubFrameIdx === 2) {
-                            // Border garis bantu estetis sederhana khusus template 2 cadangan
                             ctxPS.lineWidth = 10; ctxPS.strokeStyle = "#db939a"; ctxPS.strokeRect(5, 5, 1190, 1790);
                             ctxPS.beginPath(); ctxPS.moveTo(600,0); ctxPS.lineTo(600,1800); ctxPS.stroke();
                         }
                     }
 
-                    // Buat Berkas PNG
                     await renderStripDynamicTimeline(null);
                     const psBase64 = exportCanvas.toDataURL('image/png').split(',')[1];
                     zip.file(`premium-photostrip-frame-${activeSubFrameIdx}.png`, psBase64, {base64: true});
 
-                    // Rekam Video Animasi Kontainer Bebas Corrupt
                     const videoStream = exportCanvas.captureStream(15);
                     const chunks = [];
                     const recorder = new MediaRecorder(videoStream, { mimeType: 'video/webm;codecs=vp8', videoBitsPerSecond: 6000000 });
@@ -531,7 +523,7 @@
 
             } catch (error) {
                 alert("Terjadi Kendala Teknis: " + error.message);
-            } finaly {
+            } finally {
                 btnDownload.disabled = false;
                 btnDownload.innerText = "🎁 UNDUH ZIP HASIL FOTO & VIDEO";
             }
