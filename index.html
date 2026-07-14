@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aesthetic Studio - Dynamic Live Preview System</title>
+    <title>Aesthetic Studio - Master Dual Column Control Engine</title>
     <!-- Library untuk membungkus output menjadi berkas ZIP tunggal -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
@@ -28,7 +28,7 @@
         /* WORKSPACE UTAMA SEJAJAR */
         .pb-main-workspace-layout { display: flex; padding: 25px; gap: 25px; background: #fff5f6; box-sizing: border-box; justify-content: center; align-items: stretch; }
         
-        /* SISI KIRI STACK KONTROL KAMERA & PANDUAN & BUTTON FRAME */
+        /* SISI KIRI: STACK KAMERA + PANDUAN + BUTTON FRAME 1 & 2 */
         .pb-left-stack { width: 680px; display: flex; flex-direction: column; gap: 15px; justify-content: space-between; }
         .pb-camera-box { width: 680px; height: 382.5px; background: #000; border: 3px solid #db939a; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; box-sizing: border-box; }
         #pbVideo { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
@@ -37,21 +37,20 @@
 
         .pb-notice-board { background: #fffdf5; border: 2px dashed #ffb3ba; font-size: 11.5px; font-weight: bold; color: #b56b72; padding: 12px 18px; line-height: 1.6; border-radius: 6px; box-sizing: border-box; text-align: left; }
 
-        /* AREA LAYER KONTROL BAWAH KAMERA (FRAME & PREVIEW SWITCHER) */
-        .pb-left-controls-area { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+        /* BARIS TOMBOL BINGKAI DI KIRI (DI BAWAH PANDUAN) */
         .pb-subframe-selector-bar { display: none; gap: 12px; justify-content: center; align-items: center; width: 100%; margin-top: 2px; }
         .subframe-btn { background: #fff5f6; color: #b56b72; border: 2px solid #db939a; padding: 6px 20px; font-size: 11px; font-weight: bold; cursor: pointer; border-radius: 4px; text-transform: uppercase; box-shadow: 2px 2px 0px rgba(0,0,0,0.05); transition: 0.1s; }
         .subframe-btn.active { background: #ffb3ba; color: white; }
 
-        /* TOMBOL BARU DI BAWAH KAMERA SEJAJAR (AKAN MUNCUL SETELAH SELESAI FOTO) */
+        /* SISI KANAN: STACK BINGKAI + BUTTON PREVIEW TOGGLE (DI BAWAH FRAME PREVIEW) */
+        .pb-right-column-stack { flex: 1; display: flex; flex-direction: column; gap: 15px; justify-content: space-between; align-items: center; }
+        .pb-right-frame-display { background: white; border: 3px solid #ffb3ba; display: flex; align-items: center; justify-content: center; padding: 15px; box-sizing: border-box; width: 100%; flex: 1; min-height: 440px; }
+        
+        /* BARIS TOMBOL PREVIEW DI KANAN (DI BAWAH FRAME PREVIEW) */
         .pb-preview-toggle-bar { display: none; gap: 12px; justify-content: center; align-items: center; width: 100%; margin-top: 2px; }
         .toggle-view-btn { background: #ffffff; color: #db939a; border: 2px solid #db939a; padding: 6px 20px; font-size: 11px; font-weight: bold; cursor: pointer; border-radius: 4px; text-transform: uppercase; box-shadow: 2px 2px 0px rgba(0,0,0,0.05); transition: 0.2s; }
         .toggle-view-btn.active { background: #db939a; color: #ffffff; box-shadow: 0px 3px 6px rgba(0,0,0,0.1); }
 
-        /* SISI KANAN PANEL BINGKAI PREVIEW HASIL JAPRET */
-        .pb-right-column-stack { flex: 1; display: flex; flex-direction: column; gap: 15px; align-items: center; justify-content: center; }
-        .pb-right-frame-display { background: white; border: 3px solid #ffb3ba; display: flex; align-items: center; justify-content: center; padding: 15px; box-sizing: border-box; width: 100%; flex: 1; min-height: 480px; }
-        
         /* Tampilan Koran */
         .newspaper-container { display: none; width: 345px; height: 460px; border: 1px solid #ccc; box-shadow: 2px 2px 8px rgba(0,0,0,0.1); position: relative; overflow: hidden; background: #eee; }
         .newspaper-bg-img { width: 100%; height: 100%; object-fit: contain; position: absolute; top:0; left:0; z-index: 10; pointer-events: none; }
@@ -78,7 +77,7 @@
 <body>
 
     <div class="pb-window">
-        <div class="pb-titlebar">Aesthetic Hybrid Studio Terminal - Synced Interface</div>
+        <div class="pb-titlebar">Aesthetic Hybrid Studio Terminal - Independent Column System</div>
         
         <!-- POP-UP OTOMATIS JIKA KAMERA BELUM DIIZINKAN -->
         <div id="cameraLockOverlay" class="camera-block-overlay">
@@ -101,7 +100,7 @@
         <!-- SEJAJAR WORKSPACE LAYER -->
         <div class="pb-main-workspace-layout">
             
-            <!-- STACK KIRI (Kamera + Panduan Ringkas + Opsi Kontrol Bawah Kamera) -->
+            <!-- STACK KIRI: KAMERA + PANDUAN + TOMBOL PILIH BINGKAI -->
             <div class="pb-left-stack">
                 <div class="pb-camera-box">
                     <div id="pbLiveStatus">● REC VIDEO BUFFER</div>
@@ -117,23 +116,14 @@
                     4. <b>DOWNLOAD FOTO</b>: Klik tombol unduh berkas untuk menyimpan paket berkas foto & video.
                 </div>
 
-                <!-- GRUP KONTROL DI BAWAH KAMERA (FRAME & TOGGLE PREVIEW SEJAJAR) -->
-                <div class="pb-left-controls-area">
-                    <!-- Menu Pilihan Bingkai (Hanya Aktif di Photostrip) -->
-                    <div id="subframeBar" class="pb-subframe-selector-bar">
-                        <button id="subBtn1" class="subframe-btn active" onclick="changeSubFrameSelection(1)">🖼️ FRAME 1</button>
-                        <button id="subBtn2" class="subframe-btn" onclick="changeSubFrameSelection(2)">🖼️ FRAME 2</button>
-                    </div>
-
-                    <!-- Pilihan Tampilan Hasil: Photo Preview vs Live Photo (Muncul Otomatis Saat Selesai Jepret) -->
-                    <div id="previewToggleBar" class="pb-preview-toggle-bar">
-                        <button id="btnViewStatic" class="toggle-view-btn active" onclick="setPreviewRenderMode('static')">🖼️ PHOTO PREVIEW</button>
-                        <button id="btnViewLive" class="toggle-view-btn" onclick="setPreviewRenderMode('live')">✨ LIVE PHOTO</button>
-                    </div>
+                <!-- MENU FRAME SEJAJAR KIRI DI BAWAH PANDUAN -->
+                <div id="subframeBar" class="pb-subframe-selector-bar">
+                    <button id="subBtn1" class="subframe-btn active" onclick="changeSubFrameSelection(1)">🖼️ FRAME 1</button>
+                    <button id="subBtn2" class="subframe-btn" onclick="changeSubFrameSelection(2)">🖼️ FRAME 2</button>
                 </div>
             </div>
 
-            <!-- DISPLAY KANAN + FOTO PREVIEW HASIL JEPRET -->
+            <!-- STACK KANAN: FRAME PREVIEW DISPLAY + TOMBOL PREVIEW TOGGLE DI BAWAHNYA -->
             <div class="pb-right-column-stack">
                 <div class="pb-right-frame-display">
                     <!-- PANEL MODE NEWSPAPER -->
@@ -158,6 +148,12 @@
                         
                         <img id="psFrameImageElement" class="ps-bg-frame-img" src="PB PHOTOSTRIP 1.png" alt="Photo Strip Frame" onerror="this.style.background='#eee';">
                     </div>
+                </div>
+
+                <!-- PILIHAN TAMPILAN PREVIEW (DIPINDAH KE BAWAH BINGKAI PREVIEW SEBELAH KANAN) -->
+                <div id="previewToggleBar" class="pb-preview-toggle-bar">
+                    <button id="btnViewStatic" class="toggle-view-btn active" onclick="setPreviewRenderMode('static')">🖼️ PHOTO PREVIEW</button>
+                    <button id="btnViewLive" class="toggle-view-btn" onclick="setPreviewRenderMode('live')">✨ LIVE PHOTO</button>
                 </div>
             </div>
             
@@ -457,7 +453,6 @@
             document.getElementById('btnActionStart').style.display = show ? 'inline-block' : 'none';
             btnDownload.style.display = show ? 'inline-block' : 'none';
             
-            // TOMBOL BARU MUNCUL SELESAI JEPRAK (BERLAKU PADA KEDUA MODE SEKARANG)
             if(show) {
                 previewToggleBar.style.display = 'flex';
                 isRetakeActive = false;
