@@ -880,9 +880,9 @@ if (!keyClawActive) {
                 // MODIFIKASI: Tooltip panduan koin interaktif ketika karakter berada di dekat photobooth
                 if (isTouchingPhotoboothLuar) {
                     if (hasUnlockedPhotobooth) {
-                        drawHelperTooltip("Masuk Photobooth (Ent)", (photoboothTriggerX - 50 - cameraX) * zoomLevel, yOffset + (drawHeight * 0.33));
+                        drawHelperTooltip("Masuk Photobooth (Ent)", (photoboothTriggerX - cameraX) * zoomLevel, yOffset + (drawHeight * 0.33));
                     } else {
-                        drawHelperTooltip("Gunakan Koin Anda di Mesin Photobooth 🪙", (photoboothTriggerX - 50 - cameraX) * zoomLevel, yOffset + (drawHeight * 0.33));
+                        drawHelperTooltip("Gunakan Koin Anda di Mesin Photobooth 🪙", (photoboothTriggerX - cameraX) * zoomLevel, yOffset + (drawHeight * 0.33));
                     }
                 }
 
