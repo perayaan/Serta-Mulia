@@ -852,11 +852,11 @@ if (!keyClawActive) {
                 }
 
                 // FIX BENAHI: Menumpuk 2 PNG Baru (ITEM BG & PHOTOBOOTH) secara rata 1:1 proporsional tanpa digeser atau di-resize
-                if (imgItemBG.complete) {
-                    ctx.drawImage(imgItemBG, -cameraX * zoomLevel, yOffset, drawWidth, drawHeight);
-                }
                 if (imgPhotoboothLuar.complete) {
                     ctx.drawImage(imgPhotoboothLuar, -cameraX * zoomLevel, yOffset, drawWidth, drawHeight);
+                }
+                if (imgItemBG.complete) {
+                    ctx.drawImage(imgItemBG, -cameraX * zoomLevel, yOffset, drawWidth, drawHeight);
                 }
 
                 if (gateOpened) {
