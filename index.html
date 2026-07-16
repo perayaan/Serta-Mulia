@@ -498,6 +498,19 @@
         const imgItemBG = new Image(); imgItemBG.src = 'ITEM BG.png';
         const imgPhotoboothLuar = new Image(); imgPhotoboothLuar.src = 'PHOTOBOOTH.png';
 
+        // --- BINDING ASSET BARU: AYAM DAN ANJING MONDAR MANDIR ---
+        const ayamKanan = new Image(); ayamKanan.src = 'AYAM KANAN.png';
+        const ayamKiri = new Image(); ayamKiri.src = 'AYAM KIRI.png';
+        const dogKanan = new Image(); dogKanan.src = 'DOG KANAN.png';
+        const dogKiri = new Image(); dogKiri.src = 'DOG KIRI.png';
+
+        // State & Koordinat Pergerakan Karakter Baru (Rata di bawah Kucing)
+        const npcChicken = { x: 1400, startX: 1350, endX: 1650, speed: 1.5, dir: 'right', width: 90, height: 90 };
+        const npcDog = { x: 2950, startX: 2900, endX: 3200, speed: 2.0, dir: 'right', width: 100, height: 100 };
+
+        // Variabel penanda misi photobooth selesai dilakukan (ketika dibuka & ditutup)
+        let isPhotoboothFinishedGlobal = false;
+
         // Asset Fitur TV & Lagu
         const imgTV = new Image(); imgTV.src = 'TV.png';
         const imgSpeaker = new Image(); imgSpeaker.src = 'SPEAKER.png';
@@ -784,26 +797,59 @@
                 if (!missionCompleted && player.x > houseWallRightX) player.x = houseWallRightX;
                 
                 let maxRightLimit = WORLD_WIDTH - padding;
-// JIKA kunci mesin capit belum aktif/didapatkan, batasi di area jembatan (misal x = 1920)
-if (!keyClawActive) { maxRightLimit = 1920; } 
-if (player.x > maxRightLimit) player.x = maxRightLimit;
 
-cameraX = player.x - canvas.width / 2 / zoomLevel;
-let maxCameraX = (WORLD_WIDTH - (canvas.width / zoomLevel));
+                // --- SISTEM PEMBATAS DINAMIS PERGERAKAN KE KANAN ---
+                // 1. Jika BELUM MENYELESAIKAN MISI MESIN CAPIT (kunci belum dapat), tahan di sebelum jembatan (x = 1860)
+                if (!keyClawActive) { 
+                    maxRightLimit = 1860; 
+                } 
+                // 2. Jika sudah capit tapi BELUM MELAKUKAN PHOTOBOOTH (sekedar buka & close), tahan sebelum melewati area photobooth (x = 2850)
+                else if (!isPhotoboothFinishedGlobal) {
+                    maxRightLimit = 2850;
+                }
 
-if (!missionCompleted) {
-    let lockedCameraX = 1200 - (canvas.width / zoomLevel) + 200; 
-    if (maxCameraX > lockedCameraX) maxCameraX = Math.max(0, lockedCameraX);
-}
+                if (player.x > maxRightLimit) player.x = maxRightLimit;
 
-// Kamera dikunci juga pada batas jembatan agar area capit & photobooth tidak mengintip dulu
-if (!keyClawActive) {
-    let lockedClawCamX = 1920 - (canvas.width / zoomLevel) + 200;
-    if (maxCameraX > lockedClawCamX) maxCameraX = Math.max(0, lockedClawCamX);
-}
+                cameraX = player.x - canvas.width / 2 / zoomLevel;
+                let maxCameraX = (WORLD_WIDTH - (canvas.width / zoomLevel));
+
+                if (!missionCompleted) {
+                    let lockedCameraX = 1200 - (canvas.width / zoomLevel) + 200; 
+                    if (maxCameraX > lockedCameraX) maxCameraX = Math.max(0, lockedCameraX);
+                }
+
+                // Kamera dikunci mengikuti batas jembatan agar area capit & photobooth tidak mengintip dulu
+                if (!keyClawActive) {
+                    let lockedClawCamX = 1860 - (canvas.width / zoomLevel) + 200;
+                    if (maxCameraX > lockedClawCamX) maxCameraX = Math.max(0, lockedClawCamX);
+                } else if (!isPhotoboothFinishedGlobal) {
+                    let lockedPbCamX = 2850 - (canvas.width / zoomLevel) + 200;
+                    if (maxCameraX > lockedPbCamX) maxCameraX = Math.max(0, lockedPbCamX);
+                }
 
                 if (cameraX < 0) cameraX = 0;
                 if (cameraX > maxCameraX) cameraX = maxCameraX;
+
+                // --- UPDATE PERGERAKAN MONDA-MANDIR NPC (Hanya di Luar Rumah) ---
+                if (!isPopupActive && !isPuzzleActive && !isPhotoActive && !isClawPopupActive && !isPhotoboothActive) {
+                    // Logika Mondar-Mandir Ayam
+                    if (npcChicken.dir === 'right') {
+                        npcChicken.x += npcChicken.speed;
+                        if (npcChicken.x >= npcChicken.endX) npcChicken.dir = 'left';
+                    } else {
+                        npcChicken.x -= npcChicken.speed;
+                        if (npcChicken.x <= npcChicken.startX) npcChicken.dir = 'right';
+                    }
+
+                    // Logika Mondar-Mandir Anjing
+                    if (npcDog.dir === 'right') {
+                        npcDog.x += npcDog.speed;
+                        if (npcDog.x >= npcDog.endX) npcDog.dir = 'left';
+                    } else {
+                        npcDog.x -= npcDog.speed;
+                        if (npcDog.x <= npcDog.startX) npcDog.dir = 'right';
+                    }
+                }
 
             } else if (currentScene === "dalam_rumah") {
                 cameraX = 0; 
@@ -884,6 +930,25 @@ if (!keyClawActive) {
                     } else {
                         drawHelperTooltip("Gunakan Koin Anda di Mesin Photobooth 🪙", (photoboothTriggerX - 15 - cameraX) * zoomLevel, yOffset + (drawHeight * 0.33));
                     }
+                }
+
+                // --- RENDERING NPC AYAM & ANJING DI BAWAH TUMPANGAN KUCING ---
+                const npcBaseY = ((canvas.height * 0.8) - player.height) + (floatEffect * zoomLevel);
+                
+                // Render NPC Ayam
+                if (ayamKanan.complete && ayamKiri.complete) {
+                    const chX = (npcChicken.x - cameraX) * zoomLevel - (npcChicken.width * zoomLevel / 2);
+                    const chY = npcBaseY + ((player.height - npcChicken.height) * zoomLevel); 
+                    const chImg = (npcChicken.dir === 'right') ? ayamKanan : ayamKiri;
+                    ctx.drawImage(chImg, chX, chY, npcChicken.width * zoomLevel, npcChicken.height * zoomLevel);
+                }
+
+                // Render NPC Anjing (MODIFIKASI: Diubah agak kebawah dengan menambahkan offset +25 piksel)
+                if (dogKanan.complete && dogKiri.complete) {
+                    const dgX = (npcDog.x - cameraX) * zoomLevel - (npcDog.width * zoomLevel / 2);
+                    const dgY = npcBaseY + ((player.height - npcDog.height) * zoomLevel) + (17 * zoomLevel);
+                    const dgImg = (npcDog.dir === 'right') ? dogKanan : dogKiri;
+                    ctx.drawImage(dgImg, dgX, dgY, npcDog.width * zoomLevel, npcDog.height * zoomLevel);
                 }
 
                 pX = (player.x - cameraX) * zoomLevel - (player.width * zoomLevel / 2);
@@ -1679,9 +1744,10 @@ if (!keyClawActive) {
             initCamera();
         }
 
-        // MODIFIKASI: Penanganan fungsi tombol silang di bagian pojok kanan atas pop-up photobooth
+        // MODIFIKASI: Menutup jendela studio photobooth secara langsung membuka pembatas gerak ke kanan!
         function closePhotoboothWindow() {
             isPhotoboothActive = false;
+            isPhotoboothFinishedGlobal = true; // Cukup buka & close jendela langsung bisa ke kanan!
             document.getElementById('masterPhotoboothUI').style.display = 'none';
             clearInterval(canvasRenderInterval);
             clearInterval(uiLiveLoopInterval);
