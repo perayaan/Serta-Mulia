@@ -492,27 +492,34 @@
         const imgRumahMisi = new Image(); imgRumahMisi.src = 'RUMAH MISI.png';
         const imgIsiRumahMisi = new Image(); imgIsiRumahMisi.src = 'ISI RUMAH MISI.png';
 
-        // Aset Luar Rumah & Png Baru
+        // Item Aset Final House & HBD Keko
+        const imgFinalHouse = new Image(); imgFinalHouse.src = 'FINAL HOUSE.png';
+        const imgHbdKeko = new Image(); imgHbdKeko.src = 'HBD KEKO.png';
+        let isFinalHouseUnlockedWithKey = false; 
+
+        // Animasi Heart Special 10 Detik
+        let hbdLoveAnimation = {
+            active: false,
+            startTime: 0,
+            hearts: []
+        };
+
+        // Aset Luar Rumah & Png Pendukung
         const imgMesinCapitLuar = new Image(); imgMesinCapitLuar.src = 'MESIN CAPIT.png';
         const imgItemBG = new Image(); imgItemBG.src = 'ITEM BG.png';
         const imgPhotoboothLuar = new Image(); imgPhotoboothLuar.src = 'PHOTOBOOTH.png';
-        const imgFinalHouse = new Image(); imgFinalHouse.src = 'FINAL HOUSE.png';
 
-        // --- BINDING ASSET BARU: AYAM DAN ANJING MONDAR MANDIR ---
+        // Asset Ayam & Anjing
         const ayamKanan = new Image(); ayamKanan.src = 'AYAM KANAN.png';
         const ayamKiri = new Image(); ayamKiri.src = 'AYAM KIRI.png';
         const dogKanan = new Image(); dogKanan.src = 'DOG KANAN.png';
         const dogKiri = new Image(); dogKiri.src = 'DOG KIRI.png';
 
-        // State & Koordinat Pergerakan Karakter Baru (Rata di bawah Kucing)
+        // State & Koordinat Pergerakan Karakter Baru
         const npcChicken = { x: 1400, startX: 1350, endX: 1650, speed: 1.5, dir: 'right', width: 90, height: 90 };
         const npcDog = { x: 2950, startX: 2900, endX: 3200, speed: 2.0, dir: 'right', width: 100, height: 100 };
 
-        // Variabel penanda misi photobooth & final house
         let isPhotoboothFinishedGlobal = false;
-        let hasUnlockedFinalHouse = false;
-        let isTouchingFinalHouse = false;
-        const finalHouseTriggerX = 3550;
 
         // Asset Fitur TV & Lagu
         const imgTV = new Image(); imgTV.src = 'TV.png';
@@ -534,7 +541,6 @@
         let isPhotoActive = false;
         let isClawPopupActive = false;
         
-        // State Photobooth Terbuka/Kunci Koin
         let isPhotoboothActive = false; 
         let hasUnlockedPhotobooth = false; 
         let isTouchingPhotoboothLuar = false; 
@@ -543,7 +549,7 @@
         let isPhotoFinishedGlobal = false;
         let clawGameFinished = false; 
 
-        // State Koin Kiri Bawah Aktif
+        // State Koin & Kunci Aktif
         let coin1Active = false;
         let coin2Active = false;
         let keyClawActive = false;
@@ -563,15 +569,19 @@
         const gateWallX = 430; 
         let isTouchingGate = false; 
 
-        // State Rumah Misi & Koordinat Pemicu
+        // State Rumah & Koordinat Pemicu
         let currentScene = "luar"; 
+        let enteredFinalHouse = false; // Penanda scene dalam rumah (Rumah Misi / Final House)
         let missionCompleted = false; 
         let isTouchingHouseDoor = false;
+        let isTouchingFinalHouseDoor = false;
         let isTouchingClawMachineLuar = false;
+        
         const houseDoorX = 1030; 
         const houseWallRightX = 1250; 
         const clawMachineX = 1730; 
         const photoboothTriggerX = 2680; 
+        const finalHouseX = 3500; // Koordinat pintu Final House di ujung paling kanan map
 
         // State Fitur TV & Lagu
         let tvOn = false;
@@ -596,11 +606,9 @@
         const imgTumpukanHati = new Image(); imgTumpukanHati.src = 'CW TUMPUKAN HATI.png';
         const imgOutBox = new Image(); imgOutBox.src = 'CW OUT BOX.png';
 
-        // Aset potong manual
         const imgMainClaw = new Image(); imgMainClaw.src = 'CW MAIN CLAW.png';
         const imgHati = new Image(); imgHati.src = 'CW HATI.png';
 
-        // Variabel Internal Engine Capit
         const clawCanvas = document.getElementById('clawCanvas');
         const clawCtx = clawCanvas.getContext('2d');
         const size = 2640;
@@ -609,7 +617,6 @@
         let clawXOffset = -450; 
         let mainClawYOffset = 0;
 
-        // KALIBRASI CAKAR DAN UKURAN PRESET
         const cakarWidth = 270;   
         const cakarHeight = 270;
         const cakarYAdj = 350;    
@@ -660,7 +667,8 @@
 
         function exitHouse() {
             currentScene = "luar";
-            player.x = houseDoorX + 30; 
+            player.x = enteredFinalHouse ? (finalHouseX - 50) : (houseDoorX + 30); 
+            enteredFinalHouse = false;
             missionCompleted = true; 
             document.getElementById('exitBtn').style.display = "none";
             document.getElementById('songPanel').style.display = "none";
@@ -679,6 +687,25 @@
         function startLoveAnimation() {
             loveAnimation.active = true; loveAnimation.hearts = [];
             loveAnimation.frameCounter = 0; loveAnimation.loopCount = 0;
+        }
+
+        function triggerHbdLoveAnimation() {
+            hbdLoveAnimation.active = true;
+            hbdLoveAnimation.startTime = Date.now();
+            hbdLoveAnimation.hearts = [];
+            
+            for (let i = 0; i < 35; i++) {
+                let side = Math.random() < 0.5 ? 'left' : 'right';
+                hbdLoveAnimation.hearts.push({
+                    side: side,
+                    xRatio: side === 'left' ? Math.random() * 0.25 : 0.75 + Math.random() * 0.25,
+                    y: canvas.height + Math.random() * 400,
+                    size: 16 + Math.random() * 32,
+                    speed: 1.5 + Math.random() * 3.5,
+                    opacity: 0.6 + Math.random() * 0.4,
+                    color: `hsl(${330 + Math.random() * 30}, 100%, ${60 + Math.random() * 20}%)`
+                });
+            }
         }
 
         window.addEventListener('resize', () => {
@@ -765,7 +792,7 @@
             isMainBtnClicked = false;
         }
 
-        // --- LOGIKA UTAMA SIKLUS PERMAINAN (FRAME LOOP) ---
+        // --- LOGIKA UTAMA SIKLUS PERMAINAN ---
         function loop() {
             if (!isPopupActive && !isPuzzleActive && !isPhotoActive && !isClawPopupActive && !isPhotoboothActive) {
                 if (keys.left) { 
@@ -791,24 +818,25 @@
                 if (!gateOpened && player.x >= gateWallX) { isTouchingGate = true; } else { isTouchingGate = false; }
                 if (!gateOpened && player.x > gateWallX) player.x = gateWallX;
                 
+                // Pintu Rumah Misi (Awal)
                 if (player.x >= 1050 && player.x <= 1250) { isTouchingHouseDoor = true; } else { isTouchingHouseDoor = false; }
-                if (player.x >= 1650 && player.x <= 1800) { isTouchingClawMachineLuar = true; } else { isTouchingClawMachineLuar = false; }
                 
-                // Deteksi Karakter mendekati Mesin Photobooth
+                // Mesin Capit & Photobooth
+                if (player.x >= 1650 && player.x <= 1800) { isTouchingClawMachineLuar = true; } else { isTouchingClawMachineLuar = false; }
                 if (player.x >= photoboothTriggerX - 95 && player.x <= photoboothTriggerX + 95) { isTouchingPhotoboothLuar = true; } else { isTouchingPhotoboothLuar = false; }
 
-                // Deteksi Karakter mendekati Final House
-                if (player.x >= finalHouseTriggerX - 150 && player.x <= finalHouseTriggerX + 150) { isTouchingFinalHouse = true; } else { isTouchingFinalHouse = false; }
+                // Pintu Final House di Ujung Kanan (X = 3500)
+                if (player.x >= finalHouseX - 120 && player.x <= finalHouseX + 120) { isTouchingFinalHouseDoor = true; } else { isTouchingFinalHouseDoor = false; }
 
                 if (!missionCompleted && player.x > houseWallRightX) player.x = houseWallRightX;
                 
                 let maxRightLimit = WORLD_WIDTH - padding;
 
-                // --- SISTEM PEMBATAS DINAMIS PERGERAKAN KE KANAN ---
-                if (!keyClawActive && !hasUnlockedFinalHouse) { 
+                // Pembatas pergerakan
+                if (!keyClawActive && !isFinalHouseUnlockedWithKey) { 
                     maxRightLimit = 1860; 
                 } 
-                else if (!isPhotoboothFinishedGlobal && !hasUnlockedFinalHouse) {
+                else if (!isPhotoboothFinishedGlobal) {
                     maxRightLimit = 2850;
                 }
 
@@ -822,11 +850,10 @@
                     if (maxCameraX > lockedCameraX) maxCameraX = Math.max(0, lockedCameraX);
                 }
 
-                // Kamera dikunci mengikuti pembatas jalan
-                if (!keyClawActive && !hasUnlockedFinalHouse) {
+                if (!keyClawActive && !isFinalHouseUnlockedWithKey) {
                     let lockedClawCamX = 1860 - (canvas.width / zoomLevel) + 200;
                     if (maxCameraX > lockedClawCamX) maxCameraX = Math.max(0, lockedClawCamX);
-                } else if (!isPhotoboothFinishedGlobal && !hasUnlockedFinalHouse) {
+                } else if (!isPhotoboothFinishedGlobal) {
                     let lockedPbCamX = 2850 - (canvas.width / zoomLevel) + 200;
                     if (maxCameraX > lockedPbCamX) maxCameraX = Math.max(0, lockedPbCamX);
                 }
@@ -834,9 +861,7 @@
                 if (cameraX < 0) cameraX = 0;
                 if (cameraX > maxCameraX) cameraX = maxCameraX;
 
-                // --- UPDATE PERGERAKAN MONDA-MANDIR NPC (Hanya di Luar Rumah) ---
                 if (!isPopupActive && !isPuzzleActive && !isPhotoActive && !isClawPopupActive && !isPhotoboothActive) {
-                    // Logika Mondar-Mandir Ayam
                     if (npcChicken.dir === 'right') {
                         npcChicken.x += npcChicken.speed;
                         if (npcChicken.x >= npcChicken.endX) npcChicken.dir = 'left';
@@ -845,7 +870,6 @@
                         if (npcChicken.x <= npcChicken.startX) npcChicken.dir = 'right';
                     }
 
-                    // Logika Mondar-Mandir Anjing
                     if (npcDog.dir === 'right') {
                         npcDog.x += npcDog.speed;
                         if (npcDog.x >= npcDog.endX) npcDog.dir = 'left';
@@ -859,8 +883,8 @@
                 cameraX = 0; 
                 isTouchingGate = false;
                 isTouchingHouseDoor = false;
+                isTouchingFinalHouseDoor = false;
                 isTouchingPhotoboothLuar = false;
-                isTouchingFinalHouse = false;
 
                 if (isPuzzleFinishedGlobal && isPhotoFinishedGlobal) {
                     document.getElementById('exitBtn').style.display = "block";
@@ -892,6 +916,7 @@
                 const drawHeight = WORLD_HEIGHT * zoomLevel;
                 const yOffset = (canvas.height - drawHeight) / 2;
 
+                // LAYER 1-5: Latar Belakang & Bangunan Luar
                 ctx.drawImage(imgAwan, -cameraX * 0.05 * zoomLevel, yOffset + awanYOffset, drawWidth, drawHeight * 0.8);
                 ctx.drawImage(imgGunung, -cameraX * 0.4 * zoomLevel, yOffset + gunungYOffset, drawWidth, drawHeight);
                 ctx.drawImage(imgTanah, -cameraX * zoomLevel, yOffset, drawWidth, drawHeight);
@@ -902,15 +927,16 @@
                     ctx.drawImage(imgMesinCapitLuar, -cameraX * zoomLevel, yOffset, drawWidth, drawHeight);
                 }
 
-                // FIX PENUMPUKAN 1:1 PENUH: DITUMPULKAN TANPA SCALE/DIGESER
                 if (imgPhotoboothLuar.complete) {
                     ctx.drawImage(imgPhotoboothLuar, -cameraX * zoomLevel, yOffset, drawWidth, drawHeight);
                 }
-                if (imgFinalHouse.complete) {
-                    ctx.drawImage(imgFinalHouse, -cameraX * zoomLevel, yOffset, drawWidth, drawHeight);
-                }
                 if (imgItemBG.complete) {
                     ctx.drawImage(imgItemBG, -cameraX * zoomLevel, yOffset, drawWidth, drawHeight);
+                }
+
+                // DIGAMBAR PALING ATAS (LAYER LATAR): FINAL HOUSE.png agar tidak tertutup kayu/itemBG
+                if (imgFinalHouse.complete) {
+                    ctx.drawImage(imgFinalHouse, -cameraX * zoomLevel, yOffset, drawWidth, drawHeight);
                 }
 
                 if (gateOpened) {
@@ -921,10 +947,22 @@
                     if (isTouchingGate) { drawHelperTooltip("open the gate (Ent)", (480 - cameraX) * zoomLevel, yOffset + (drawHeight * 0.53)); }
                 }
 
-                if (isTouchingHouseDoor) { drawHelperTooltip("enter room (Ent)", ((houseDoorX + 110) - cameraX) * zoomLevel, yOffset + (drawHeight * 0.42)); }
+                // Tooltip Rumah Awal (BISA LANGSUNG MASUK TANPA KUNCI)
+                if (isTouchingHouseDoor) { 
+                    drawHelperTooltip("enter room (Ent)", ((houseDoorX + 110) - cameraX) * zoomLevel, yOffset + (drawHeight * 0.42)); 
+                }
+
+                // Tooltip Final House di Ujung Kanan (BUTUH KUNCI)
+                if (isTouchingFinalHouseDoor) {
+                    if (isFinalHouseUnlockedWithKey) {
+                        drawHelperTooltip("enter Final House (Ent)", (finalHouseX - cameraX) * zoomLevel, yOffset + (drawHeight * 0.42));
+                    } else {
+                        drawHelperTooltip("Pintu Final House terkunci! Seret KUNCI (Key) di sini 🔑", (finalHouseX - cameraX) * zoomLevel, yOffset + (drawHeight * 0.42));
+                    }
+                }
                 
                 if (isTouchingClawMachineLuar) { 
-                    if (keyClawActive) {
+                    if (keyClawActive || isFinalHouseUnlockedWithKey) {
                         drawHelperTooltip("mainkan mesin capit (Ent)", (clawMachineX - 30 - cameraX) * zoomLevel, yOffset + (drawHeight * 0.45));
                     } else {
                         drawHelperTooltip("Gunakan Koin Anda di Mesin Capit 🪙", (clawMachineX - 25 - cameraX) * zoomLevel, yOffset + (drawHeight * 0.45));
@@ -939,18 +977,9 @@
                     }
                 }
 
-                if (isTouchingFinalHouse) {
-                    if (hasUnlockedFinalHouse) {
-                        drawHelperTooltip("Masuk Final House (Ent)", (finalHouseTriggerX - 10 - cameraX) * zoomLevel, yOffset + (drawHeight * 0.33));
-                    } else {
-                        drawHelperTooltip("Tarik Kunci Ke Rumah Ini 🔑", (finalHouseTriggerX - 10 - cameraX) * zoomLevel, yOffset + (drawHeight * 0.33));
-                    }
-                }
-
-                // --- RENDERING NPC AYAM & ANJING DI BAWAH TUMPANGAN KUCING ---
+                // RENDERING NPC AYAM & ANJING DI BAWAH KUCING
                 const npcBaseY = ((canvas.height * 0.8) - player.height) + (floatEffect * zoomLevel);
                 
-                // Render NPC Ayam
                 if (ayamKanan.complete && ayamKiri.complete) {
                     const chX = (npcChicken.x - cameraX) * zoomLevel - (npcChicken.width * zoomLevel / 2);
                     const chY = npcBaseY + ((player.height - npcChicken.height) * zoomLevel); 
@@ -958,7 +987,6 @@
                     ctx.drawImage(chImg, chX, chY, npcChicken.width * zoomLevel, npcChicken.height * zoomLevel);
                 }
 
-                // Render NPC Anjing
                 if (dogKanan.complete && dogKiri.complete) {
                     const dgX = (npcDog.x - cameraX) * zoomLevel - (npcDog.width * zoomLevel / 2);
                     const dgY = npcBaseY + ((player.height - npcDog.height) * zoomLevel) + (17 * zoomLevel);
@@ -966,6 +994,7 @@
                     ctx.drawImage(dgImg, dgX, dgY, npcDog.width * zoomLevel, npcDog.height * zoomLevel);
                 }
 
+                // RENDERING KARAKTER KUCING (PALING ATAS/DEPAN)
                 pX = (player.x - cameraX) * zoomLevel - (player.width * zoomLevel / 2);
                 pY = ((canvas.height * 0.8) - player.height) + (player.yOffset * zoomLevel) + (player.y * zoomLevel);
                 const currentImg = (player.dir === 'right') ? kucingKanan : kucingKiri;
@@ -976,6 +1005,12 @@
 
             } else if (currentScene === "dalam_rumah") {
                 ctx.drawImage(imgIsiRumahMisi, 0, 0, canvas.width, canvas.height);
+
+                // Jika memasuki Final House (dibuat dari pintunya), tampilkan HBD KEKO.png
+                if (enteredFinalHouse && imgHbdKeko.complete) {
+                    ctx.drawImage(imgHbdKeko, 0, 0, canvas.width, canvas.height);
+                }
+
                 ctx.drawImage(imgTV, 0, 0, canvas.width, canvas.height);
                 const vibration = tvOn ? (Math.sin(Date.now() / 150) * 3) : 2;
                 ctx.drawImage(imgSpeaker, 0, vibration, canvas.width, canvas.height);
@@ -1044,6 +1079,25 @@
                     else { loveAnimation.active = false; loveAnimation.hearts = []; }
                 }
                 ctx.restore();
+            }
+
+            // RENDERING ANIMASI HBD LOVE 10 DETIK DI KANAN DAN KIRI
+            if (hbdLoveAnimation.active) {
+                const elapsedTime = (Date.now() - hbdLoveAnimation.startTime) / 1000;
+                if (elapsedTime <= 10) {
+                    ctx.save();
+                    hbdLoveAnimation.hearts.forEach(h => {
+                        h.y -= h.speed;
+                        let xPos = h.xRatio * canvas.width;
+                        ctx.font = `bold ${h.size}px 'Courier New', monospace`;
+                        ctx.fillStyle = h.color;
+                        ctx.globalAlpha = h.opacity;
+                        ctx.fillText("♥", xPos, h.y);
+                    });
+                    ctx.restore();
+                } else {
+                    hbdLoveAnimation.active = false;
+                }
             }
 
             if (isClawPopupActive) { updateAndDrawClawMachineEngine(); }
@@ -1190,7 +1244,6 @@
             cwGameState = "idle";
         }
 
-        // --- TRACKING CLICK KONTROL PADA CANVAS CAPIT ---
         clawCanvas.addEventListener('mousedown', (e) => {
             if (cwGameState !== "idle") return;
             const rect = clawCanvas.getBoundingClientRect();
@@ -1213,9 +1266,9 @@
             isMainBtnClicked = false;
         });
 
-        // --- HANDLER KEYBOARD INPUT GAME UTAMA & MESIN CAPIT ---
+        // --- HANDLER KEYBOARD INPUT GAME UTAMA ---
         window.addEventListener('keydown', e => {
-            if (isPhotoboothActive) return; // Nonaktifkan pergerakan game jika modal photobooth aktif
+            if (isPhotoboothActive) return;
             
             if (e.key === 'ArrowLeft' || e.key === 'a') keys.left = true;
             if (e.key === 'ArrowRight' || e.key === 'd') keys.right = true;
@@ -1227,7 +1280,7 @@
                 } else if (isClawPopupActive && cwGameState === "idle") {
                     cwGameState = "descending";
                 } else if (currentScene === "luar" && isTouchingClawMachineLuar) {
-                    if (keyClawActive) {
+                    if (keyClawActive || isFinalHouseUnlockedWithKey) {
                         isClawPopupActive = true;
                         cwGameState = "idle";
                         document.getElementById('clawMachinePopup').style.display = 'flex';
@@ -1238,16 +1291,21 @@
                     } else {
                         showCustomAlert("Mesin Photobooth terkunci! Kamu wajib menyeret (drag) koin reward dari inventory kiri bawah ke area mesin photobooth luar untuk mengaktifkannya pertama kali.");
                     }
-                } else if (currentScene === "luar" && isTouchingFinalHouse) {
-                    if (hasUnlockedFinalHouse) {
-                        showCustomAlert("Selamat! Kamu berhasil membuka Final House! ✨🏠💖");
-                        startLoveAnimation();
-                    } else {
-                        showCustomAlert("Final House terkunci! Seret (drag) kunci emas 🔑 ke area rumah ini untuk membukanya!");
-                    }
                 } else if (currentScene === "luar" && isTouchingHouseDoor) {
+                    // Masuk ke Rumah Misi (Awal)
                     currentScene = "dalam_rumah";
+                    enteredFinalHouse = false;
                     player.x = 230; player.y = 0;
+                } else if (currentScene === "luar" && isTouchingFinalHouseDoor) {
+                    // Masuk ke Final House (Di Ujung Kanan)
+                    if (isFinalHouseUnlockedWithKey) {
+                        currentScene = "dalam_rumah";
+                        enteredFinalHouse = true;
+                        player.x = 230; player.y = 0;
+                        triggerHbdLoveAnimation(); 
+                    } else {
+                        showCustomAlert("Pintu Final House terkunci! Seret (drag) item KUNCI (Key) ke area rumah ujung kanan ini untuk membukanya.");
+                    }
                 } else if (currentScene === "luar" && isTouchingGate) {
                     openPinPopup();
                 }
@@ -1696,13 +1754,28 @@
                 let currentMouseY = pos4;
 
                 if (currentScene === "luar") {
-                    let screenClawX = (clawMachineX - cameraX) * zoomLevel;
-                    let screenPbX = (photoboothTriggerX - cameraX) * zoomLevel;
-                    let screenFinalHouseX = (finalHouseTriggerX - cameraX) * zoomLevel;
-                    let screenY = (canvas.height * 0.8) - 50; 
+                    // Deteksi Drop KUNCI (itemNumber === 3) pada FINAL HOUSE di Ujung Kanan (X = 3500)
+                    if (itemNumber === 3) {
+                        let screenFinalHouseX = (finalHouseX - cameraX) * zoomLevel;
+                        let screenY = (canvas.height * 0.8) - 50;
+
+                        if (currentMouseX >= screenFinalHouseX - 220 && currentMouseX <= screenFinalHouseX + 220 &&
+                            currentMouseY >= screenY - 300 && currentMouseY <= screenY + 300) {
+                            
+                            elmnt.style.display = 'none';
+                            keyClawActive = false;
+                            isFinalHouseUnlockedWithKey = true; // Pintu Final House terbuka!
+                            showCustomAlert("Horeee! Pintu Final House di ujung kanan berhasil dibuka! Tekan Enter saat di dekat pintu untuk masuk ✨🔑");
+                            startLoveAnimation();
+                        }
+                    }
 
                     if (itemNumber === 1 || itemNumber === 2) {
-                        if (!keyClawActive && currentMouseX >= screenClawX - 150 && currentMouseX <= screenClawX + 150 &&
+                        let screenClawX = (clawMachineX - cameraX) * zoomLevel;
+                        let screenPbX = (photoboothTriggerX - cameraX) * zoomLevel;
+                        let screenY = (canvas.height * 0.8) - 50; 
+
+                        if (!keyClawActive && !isFinalHouseUnlockedWithKey && currentMouseX >= screenClawX - 150 && currentMouseX <= screenClawX + 150 &&
                             currentMouseY >= screenY - 250 && currentMouseY <= screenY + 250) {
                             
                             elmnt.style.display = 'none';
@@ -1725,26 +1798,13 @@
                             openPhotoboothWindow();
                         }
                     }
-
-                    // MENYERET KUNCI (ITEM 3) KE AREA FINAL HOUSE
-                    if (itemNumber === 3) {
-                        if (currentMouseX >= screenFinalHouseX - 250 && currentMouseX <= screenFinalHouseX + 250 &&
-                            currentMouseY >= screenY - 350 && currentMouseY <= screenY + 350) {
-                            
-                            elmnt.style.display = 'none';
-                            keyClawActive = false;
-                            hasUnlockedFinalHouse = true;
-                            showCustomAlert("Rumah Akhir (Final House) Berhasil Terbuka Dengan Kunci Emas! ✨🔑🏠");
-                            startLoveAnimation();
-                        }
-                    }
                 }
                 rearrangeItemsLayout(); 
             }
         }
 
         // ==========================================================================
-        // FITUR INTERACTIVE MODAL PHOTOBOOTH ENGINE CORE LOGIC INTERFACE
+        // FITUR INTERACTIVE MODAL PHOTOBOOTH
         // ==========================================================================
         const pbVideo = document.getElementById('pbVideo');
         const countdownEl = document.getElementById('pbCountdown');
