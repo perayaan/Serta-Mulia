@@ -393,7 +393,6 @@
     <div id="masterPhotoboothUI">
         <div class="pb-window">
             <div class="pb-titlebar">
-                <!-- MODIFIKASI: Ganti nama pop up pojok kiri atas & Tambah tombol silang [X] di kanannya -->
                 <div class="titlebar-left">special photobooth for my love</div>
                 <div class="titlebar-buttons">
                     <div class="titlebar-btn" onclick="closePhotoboothWindow()">X</div>
@@ -493,10 +492,11 @@
         const imgRumahMisi = new Image(); imgRumahMisi.src = 'RUMAH MISI.png';
         const imgIsiRumahMisi = new Image(); imgIsiRumahMisi.src = 'ISI RUMAH MISI.png';
 
-        // Aset Luar Rumah & 2 Png Baru
+        // Aset Luar Rumah & Png Baru
         const imgMesinCapitLuar = new Image(); imgMesinCapitLuar.src = 'MESIN CAPIT.png';
         const imgItemBG = new Image(); imgItemBG.src = 'ITEM BG.png';
         const imgPhotoboothLuar = new Image(); imgPhotoboothLuar.src = 'PHOTOBOOTH.png';
+        const imgFinalHouse = new Image(); imgFinalHouse.src = 'FINAL HOUSE.png';
 
         // --- BINDING ASSET BARU: AYAM DAN ANJING MONDAR MANDIR ---
         const ayamKanan = new Image(); ayamKanan.src = 'AYAM KANAN.png';
@@ -508,8 +508,11 @@
         const npcChicken = { x: 1400, startX: 1350, endX: 1650, speed: 1.5, dir: 'right', width: 90, height: 90 };
         const npcDog = { x: 2950, startX: 2900, endX: 3200, speed: 2.0, dir: 'right', width: 100, height: 100 };
 
-        // Variabel penanda misi photobooth selesai dilakukan (ketika dibuka & ditutup)
+        // Variabel penanda misi photobooth & final house
         let isPhotoboothFinishedGlobal = false;
+        let hasUnlockedFinalHouse = false;
+        let isTouchingFinalHouse = false;
+        const finalHouseTriggerX = 3550;
 
         // Asset Fitur TV & Lagu
         const imgTV = new Image(); imgTV.src = 'TV.png';
@@ -794,17 +797,18 @@
                 // Deteksi Karakter mendekati Mesin Photobooth
                 if (player.x >= photoboothTriggerX - 95 && player.x <= photoboothTriggerX + 95) { isTouchingPhotoboothLuar = true; } else { isTouchingPhotoboothLuar = false; }
 
+                // Deteksi Karakter mendekati Final House
+                if (player.x >= finalHouseTriggerX - 150 && player.x <= finalHouseTriggerX + 150) { isTouchingFinalHouse = true; } else { isTouchingFinalHouse = false; }
+
                 if (!missionCompleted && player.x > houseWallRightX) player.x = houseWallRightX;
                 
                 let maxRightLimit = WORLD_WIDTH - padding;
 
                 // --- SISTEM PEMBATAS DINAMIS PERGERAKAN KE KANAN ---
-                // 1. Jika BELUM MENYELESAIKAN MISI MESIN CAPIT (kunci belum dapat), tahan di sebelum jembatan (x = 1860)
-                if (!keyClawActive) { 
+                if (!keyClawActive && !hasUnlockedFinalHouse) { 
                     maxRightLimit = 1860; 
                 } 
-                // 2. Jika sudah capit tapi BELUM MELAKUKAN PHOTOBOOTH (sekedar buka & close), tahan sebelum melewati area photobooth (x = 2850)
-                else if (!isPhotoboothFinishedGlobal) {
+                else if (!isPhotoboothFinishedGlobal && !hasUnlockedFinalHouse) {
                     maxRightLimit = 2850;
                 }
 
@@ -818,11 +822,11 @@
                     if (maxCameraX > lockedCameraX) maxCameraX = Math.max(0, lockedCameraX);
                 }
 
-                // Kamera dikunci mengikuti batas jembatan agar area capit & photobooth tidak mengintip dulu
-                if (!keyClawActive) {
+                // Kamera dikunci mengikuti pembatas jalan
+                if (!keyClawActive && !hasUnlockedFinalHouse) {
                     let lockedClawCamX = 1860 - (canvas.width / zoomLevel) + 200;
                     if (maxCameraX > lockedClawCamX) maxCameraX = Math.max(0, lockedClawCamX);
-                } else if (!isPhotoboothFinishedGlobal) {
+                } else if (!isPhotoboothFinishedGlobal && !hasUnlockedFinalHouse) {
                     let lockedPbCamX = 2850 - (canvas.width / zoomLevel) + 200;
                     if (maxCameraX > lockedPbCamX) maxCameraX = Math.max(0, lockedPbCamX);
                 }
@@ -856,6 +860,7 @@
                 isTouchingGate = false;
                 isTouchingHouseDoor = false;
                 isTouchingPhotoboothLuar = false;
+                isTouchingFinalHouse = false;
 
                 if (isPuzzleFinishedGlobal && isPhotoFinishedGlobal) {
                     document.getElementById('exitBtn').style.display = "block";
@@ -897,9 +902,12 @@
                     ctx.drawImage(imgMesinCapitLuar, -cameraX * zoomLevel, yOffset, drawWidth, drawHeight);
                 }
 
-                // FIX BENAHI: Menumpuk 2 PNG Baru (ITEM BG & PHOTOBOOTH) secara rata 1:1 proporsional tanpa digeser atau di-resize
+                // FIX PENUMPUKAN 1:1 PENUH: DITUMPULKAN TANPA SCALE/DIGESER
                 if (imgPhotoboothLuar.complete) {
                     ctx.drawImage(imgPhotoboothLuar, -cameraX * zoomLevel, yOffset, drawWidth, drawHeight);
+                }
+                if (imgFinalHouse.complete) {
+                    ctx.drawImage(imgFinalHouse, -cameraX * zoomLevel, yOffset, drawWidth, drawHeight);
                 }
                 if (imgItemBG.complete) {
                     ctx.drawImage(imgItemBG, -cameraX * zoomLevel, yOffset, drawWidth, drawHeight);
@@ -923,12 +931,19 @@
                     }
                 }
 
-                // MODIFIKASI: Tooltip panduan koin interaktif ketika karakter berada di dekat photobooth
                 if (isTouchingPhotoboothLuar) {
                     if (hasUnlockedPhotobooth) {
                         drawHelperTooltip("Masuk Photobooth (Ent)", (photoboothTriggerX - 10 - cameraX) * zoomLevel, yOffset + (drawHeight * 0.33));
                     } else {
                         drawHelperTooltip("Gunakan Koin Anda di Mesin Photobooth 🪙", (photoboothTriggerX - 15 - cameraX) * zoomLevel, yOffset + (drawHeight * 0.33));
+                    }
+                }
+
+                if (isTouchingFinalHouse) {
+                    if (hasUnlockedFinalHouse) {
+                        drawHelperTooltip("Masuk Final House (Ent)", (finalHouseTriggerX - 10 - cameraX) * zoomLevel, yOffset + (drawHeight * 0.33));
+                    } else {
+                        drawHelperTooltip("Tarik Kunci Ke Rumah Ini 🔑", (finalHouseTriggerX - 10 - cameraX) * zoomLevel, yOffset + (drawHeight * 0.33));
                     }
                 }
 
@@ -943,7 +958,7 @@
                     ctx.drawImage(chImg, chX, chY, npcChicken.width * zoomLevel, npcChicken.height * zoomLevel);
                 }
 
-                // Render NPC Anjing (MODIFIKASI: Diubah agak kebawah dengan menambahkan offset +25 piksel)
+                // Render NPC Anjing
                 if (dogKanan.complete && dogKiri.complete) {
                     const dgX = (npcDog.x - cameraX) * zoomLevel - (npcDog.width * zoomLevel / 2);
                     const dgY = npcBaseY + ((player.height - npcDog.height) * zoomLevel) + (17 * zoomLevel);
@@ -1218,11 +1233,17 @@
                         document.getElementById('clawMachinePopup').style.display = 'flex';
                     }
                 } else if (currentScene === "luar" && isTouchingPhotoboothLuar) {
-                    // VALIDASI AKSES ENTER KEDUA DST: Jika koin sudah diunlock, enter langsung memicu pop-up photobooth
                     if (hasUnlockedPhotobooth) {
                         openPhotoboothWindow();
                     } else {
                         showCustomAlert("Mesin Photobooth terkunci! Kamu wajib menyeret (drag) koin reward dari inventory kiri bawah ke area mesin photobooth luar untuk mengaktifkannya pertama kali.");
+                    }
+                } else if (currentScene === "luar" && isTouchingFinalHouse) {
+                    if (hasUnlockedFinalHouse) {
+                        showCustomAlert("Selamat! Kamu berhasil membuka Final House! ✨🏠💖");
+                        startLoveAnimation();
+                    } else {
+                        showCustomAlert("Final House terkunci! Seret (drag) kunci emas 🔑 ke area rumah ini untuk membukanya!");
                     }
                 } else if (currentScene === "luar" && isTouchingHouseDoor) {
                     currentScene = "dalam_rumah";
@@ -1674,35 +1695,48 @@
                 let currentMouseX = pos3;
                 let currentMouseY = pos4;
 
-                if (currentScene === "luar" && (itemNumber === 1 || itemNumber === 2)) {
+                if (currentScene === "luar") {
                     let screenClawX = (clawMachineX - cameraX) * zoomLevel;
-                    
-                    // Deteksi drop pada mesin photobooth luar
                     let screenPbX = (photoboothTriggerX - cameraX) * zoomLevel;
+                    let screenFinalHouseX = (finalHouseTriggerX - cameraX) * zoomLevel;
                     let screenY = (canvas.height * 0.8) - 50; 
 
-                    if (!keyClawActive && currentMouseX >= screenClawX - 150 && currentMouseX <= screenClawX + 150 &&
-                        currentMouseY >= screenY - 250 && currentMouseY <= screenY + 250) {
-                        
-                        elmnt.style.display = 'none';
-                        if (itemNumber === 1) coin1Active = false; 
-                        else if (itemNumber === 2) coin2Active = false;
-                        
-                        isClawPopupActive = true;
-                        cwGameState = "idle";
-                        document.getElementById('clawMachinePopup').style.display = 'flex';
+                    if (itemNumber === 1 || itemNumber === 2) {
+                        if (!keyClawActive && currentMouseX >= screenClawX - 150 && currentMouseX <= screenClawX + 150 &&
+                            currentMouseY >= screenY - 250 && currentMouseY <= screenY + 250) {
+                            
+                            elmnt.style.display = 'none';
+                            if (itemNumber === 1) coin1Active = false; 
+                            else if (itemNumber === 2) coin2Active = false;
+                            
+                            isClawPopupActive = true;
+                            cwGameState = "idle";
+                            document.getElementById('clawMachinePopup').style.display = 'flex';
+                        }
+
+                        if (currentMouseX >= screenPbX - 200 && currentMouseX <= screenPbX + 200 &&
+                            currentMouseY >= screenY - 300 && currentMouseY <= screenY + 300) {
+                            
+                            elmnt.style.display = 'none';
+                            if (itemNumber === 1) coin1Active = false; 
+                            else if (itemNumber === 2) coin2Active = false;
+                            
+                            hasUnlockedPhotobooth = true;
+                            openPhotoboothWindow();
+                        }
                     }
 
-                    // SERET KOIN PEMICU AWAL: Mengaktifkan mesin photobooth via seret koin pertama kali
-                    if (currentMouseX >= screenPbX - 200 && currentMouseX <= screenPbX + 200 &&
-                        currentMouseY >= screenY - 300 && currentMouseY <= screenY + 300) {
-                        
-                        elmnt.style.display = 'none';
-                        if (itemNumber === 1) coin1Active = false; 
-                        else if (itemNumber === 2) coin2Active = false;
-                        
-                        hasUnlockedPhotobooth = true; // Status unlock aktif selamanya!
-                        openPhotoboothWindow();
+                    // MENYERET KUNCI (ITEM 3) KE AREA FINAL HOUSE
+                    if (itemNumber === 3) {
+                        if (currentMouseX >= screenFinalHouseX - 250 && currentMouseX <= screenFinalHouseX + 250 &&
+                            currentMouseY >= screenY - 350 && currentMouseY <= screenY + 350) {
+                            
+                            elmnt.style.display = 'none';
+                            keyClawActive = false;
+                            hasUnlockedFinalHouse = true;
+                            showCustomAlert("Rumah Akhir (Final House) Berhasil Terbuka Dengan Kunci Emas! ✨🔑🏠");
+                            startLoveAnimation();
+                        }
                     }
                 }
                 rearrangeItemsLayout(); 
@@ -1744,10 +1778,9 @@
             initCamera();
         }
 
-        // MODIFIKASI: Menutup jendela studio photobooth secara langsung membuka pembatas gerak ke kanan!
         function closePhotoboothWindow() {
             isPhotoboothActive = false;
-            isPhotoboothFinishedGlobal = true; // Cukup buka & close jendela langsung bisa ke kanan!
+            isPhotoboothFinishedGlobal = true;
             document.getElementById('masterPhotoboothUI').style.display = 'none';
             clearInterval(canvasRenderInterval);
             clearInterval(uiLiveLoopInterval);
