@@ -9,6 +9,9 @@
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #87CEEB; font-family: 'Courier New', Courier, monospace; user-select: none; }
         #gameCanvas { display: block; width: 100vw; height: 100vh; image-rendering: pixelated; }
         
+        /* CLASS PENTING UNTUK MENYEMBUNYIKAN ELEMEN HBD KEKO */
+        .hidden { display: none !important; }
+
         /* POP-UP UTAMA: Windows Retro Pink/Pastel Pixel */
         #retroPopup {
             display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
@@ -219,11 +222,157 @@
         .pb-btn:disabled { background: #ccc !important; border-color: #aaa !important; cursor: not-allowed; }
 
         @keyframes pulse { from { opacity: 0.5; } to { opacity: 1; } }
+
+        /* CSS KHUSUS SCENE HBD KEKO INTERACTIVE ITEMS & MODAL */
+        .interactive-item {
+            position: fixed;
+            cursor: pointer;
+            transition: transform 0.2s ease, filter 0.2s ease;
+        }
+
+        .interactive-item:hover {
+            transform: scale(1.1);
+            filter: drop-shadow(0 0 12px rgba(255, 192, 203, 1));
+        }
+
+        #kado1-floating {
+            width: 13vw;
+            z-index: 125;
+            animation: fullScreenFloat 12s ease-in-out infinite alternate;
+        }
+
+        @keyframes fullScreenFloat {
+            0% { top: 8vh; left: 10vw; transform: rotate(-5deg); }
+            20% { top: 50vh; left: 75vw; transform: rotate(6deg); }
+            40% { top: 15vh; left: 60vw; transform: rotate(-4deg); }
+            60% { top: 55vh; left: 15vw; transform: rotate(5deg); }
+            80% { top: 10vh; left: 35vw; transform: rotate(-3deg); }
+            100% { top: 45vh; left: 45vw; transform: rotate(4deg); }
+        }
+
+        #kado2-item { bottom: 22.5%; right: 22%; width: 8.5vw; z-index: 120; }
+        #kado3-item { bottom: -0.5%; left: 4%; width: 11vw; z-index: 120; }
+        #kado4-item { bottom: 1.5%; right: 29.5%; width: 7.8vw; z-index: 120; }
+        #surat-item { bottom: 1.1%; left: 29%; width: 5.5vw; z-index: 122; transform: rotate(-6deg); }
+
+        .spawn-anim {
+            animation: bounceSpawn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes bounceSpawn {
+            0% { opacity: 0; transform: scale(0) translateY(40px); }
+            70% { transform: scale(1.15) translateY(-8px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .burst-particle {
+            position: fixed;
+            width: 14px;
+            height: 14px;
+            background-color: #ffb6c1;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 400;
+            animation: particleFade 0.6s ease-out forwards;
+        }
+
+        @keyframes particleFade {
+            0% { opacity: 1; transform: translate(0, 0) scale(1); }
+            100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0); }
+        }
+
+        .floating-heart {
+            position: fixed;
+            font-size: 24px;
+            pointer-events: none;
+            z-index: 450;
+            animation: heartFloat 2s ease-out forwards;
+        }
+
+        @keyframes heartFloat {
+            0% { opacity: 1; transform: translateY(0) scale(0.8) rotate(0deg); }
+            50% { opacity: 0.9; transform: translateY(-80px) scale(1.3) rotate(var(--rot)); }
+            100% { opacity: 0; transform: translateY(-160px) scale(1) rotate(var(--rot)); }
+        }
+
+        .hbd-modal-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 400;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .hbd-modal-overlay.active { opacity: 1; pointer-events: auto; }
+
+        .hbd-modal-card {
+            position: relative;
+            background: #fff0f5; border: 6px solid #ff69b4; border-radius: 28px;
+            padding: 35px; text-align: center; width: 520px; max-width: 90vw;
+            box-shadow: 0 12px 0 #db7093, 0 20px 35px rgba(0,0,0,0.4);
+            transform: scale(0.7); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .hbd-modal-overlay.active .hbd-modal-card { transform: scale(1); }
+
+        .hbd-modal-img {
+            max-width: 190px; max-height: 190px; margin: 10px auto 20px;
+            display: block; filter: drop-shadow(0 6px 8px rgba(0,0,0,0.15));
+        }
+
+        .hbd-modal-text {
+            color: #d81b60; font-size: 24px; font-weight: bold;
+            margin-bottom: 25px; line-height: 1.4;
+        }
+
+        .hbd-modal-btn {
+            background-color: #ff69b4; color: white; border: none;
+            padding: 15px 32px; font-size: 20px; font-weight: bold;
+            border-radius: 16px; cursor: pointer; box-shadow: 0 5px 0 #c71585;
+            transition: all 0.1s ease;
+        }
+
+        .hbd-modal-btn:hover { background-color: #ff1493; }
+        .hbd-modal-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #c71585; }
+
+        .hbd-toast-alert {
+            position: fixed; top: 50px; left: 50%;
+            transform: translateX(-50%) translateY(-30px);
+            background-color: #ff4757; color: white;
+            padding: 15px 35px; border-radius: 40px;
+            font-weight: bold; font-size: 20px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+            opacity: 0; pointer-events: none;
+            transition: all 0.3s ease; z-index: 500;
+        }
+
+        .hbd-toast-alert.show { opacity: 1; transform: translateX(-50%) translateY(0); }
     </style>
 </head>
 <body>
 
     <canvas id="gameCanvas"></canvas>
+
+    <!-- ELEMEN INTERAKTIF KHUSUS HBD KEKO -->
+    <div class="hbd-toast-alert" id="toastAlert">buka suratnya dulu dong! 💌</div>
+
+    <img src="KADO 1.png" id="kado1-floating" class="interactive-item hidden" alt="Kado 1">
+    <img src="KADO 2.png" id="kado2-item" class="interactive-item hidden" alt="Kado 2">
+    <img src="KADO 3.png" id="kado3-item" class="interactive-item hidden" alt="Kado 3">
+    <img src="KADO 4.png" id="kado4-item" class="interactive-item hidden" alt="Kado 4">
+    <img src="SURAT.png" id="surat-item" class="interactive-item hidden" alt="Surat">
+
+    <div class="hbd-modal-overlay" id="modalOverlay">
+      <div class="hbd-modal-card" id="modalCard">
+        <img id="modalImage" src="" alt="Item Preview" class="hbd-modal-img">
+        <div id="modalText" class="hbd-modal-text"></div>
+        <button id="modalBtn" class="hbd-modal-btn">yeay sudah, timaacii</button>
+      </div>
+    </div>
 
     <!-- UI Tombol Keluar & Panel Lagu -->
     <button id="exitBtn" onclick="exitHouse()">🐾 KELUAR</button>
@@ -567,6 +716,182 @@
         let isRightBtnClicked = false;
         let isMainBtnClicked = false;
 
+        // --- STATE & ELEMENT LOGIC SCENE HBD KEKO ---
+        let hasOpenedKado1 = false;
+        let hasReadSurat = false;
+
+        const kado1 = document.getElementById('kado1-floating');
+        const kado2 = document.getElementById('kado2-item');
+        const kado3 = document.getElementById('kado3-item');
+        const kado4 = document.getElementById('kado4-item');
+        const surat = document.getElementById('surat-item');
+
+        const modalOverlay = document.getElementById('modalOverlay');
+        const modalCard = document.getElementById('modalCard');
+        const modalImage = document.getElementById('modalImage');
+        const modalText = document.getElementById('modalText');
+        const modalBtn = document.getElementById('modalBtn');
+        const toastAlert = document.getElementById('toastAlert');
+
+        let currentActionCallback = null;
+        let heartInterval = null;
+
+        function showHbdKekoElements() {
+            if (currentScene !== "hbd_keko") return;
+            if (!hasOpenedKado1) {
+                kado1.classList.remove('hidden');
+                kado2.classList.add('hidden');
+                kado3.classList.add('hidden');
+                kado4.classList.add('hidden');
+                surat.classList.add('hidden');
+            } else {
+                kado1.classList.add('hidden');
+                kado2.classList.remove('hidden');
+                kado3.classList.remove('hidden');
+                kado4.classList.remove('hidden');
+                surat.classList.remove('hidden');
+            }
+        }
+
+        function hideHbdKekoElements() {
+            kado1.classList.add('hidden');
+            kado2.classList.add('hidden');
+            kado3.classList.add('hidden');
+            kado4.classList.add('hidden');
+            surat.classList.add('hidden');
+            modalOverlay.classList.remove('active');
+            if (heartInterval) clearInterval(heartInterval);
+        }
+
+        // EVENT LISTENER INTERAKSI KADO & SURAT (Hanya Aktif di Dalam Final House)
+        kado1.addEventListener('click', (e) => {
+            if (currentScene !== "hbd_keko") return;
+            createBurstEffect(e.clientX, e.clientY);
+            setTimeout(() => {
+                kado1.classList.add('hidden');
+                showModal('KADO 1.png', 'silahkan buka kado nomor 1', () => {
+                    hasOpenedKado1 = true;
+                    spawnRemainingItems();
+                });
+            }, 150);
+        });
+
+        function spawnRemainingItems() {
+            if (currentScene !== "hbd_keko") return;
+            const itemsToSpawn = [
+                { el: kado2, delay: 100 },
+                { el: kado3, delay: 200 },
+                { el: kado4, delay: 300 },
+                { el: surat, delay: 400 }
+            ];
+
+            itemsToSpawn.forEach(item => {
+                setTimeout(() => {
+                    if (currentScene === "hbd_keko") {
+                        item.el.classList.remove('hidden');
+                        item.el.classList.add('spawn-anim');
+                    }
+                }, item.delay);
+            });
+        }
+
+        [
+            { el: kado2, num: 2, img: 'KADO 2.png' },
+            { el: kado3, num: 3, img: 'KADO 3.png' },
+            { el: kado4, num: 4, img: 'KADO 4.png' }
+        ].forEach(kado => {
+            kado.el.addEventListener('click', () => {
+                if (currentScene !== "hbd_keko") return;
+                if (!hasReadSurat) {
+                    triggerToast('buka suratnya dulu dong!');
+                } else {
+                    showModal(kado.img, `silahkan buka kado nomor ${kado.num}`, null);
+                }
+            });
+        });
+
+        surat.addEventListener('click', () => {
+            if (currentScene !== "hbd_keko") return;
+            showModal('SURAT.png', 'buka suratnya sayang', () => {
+                hasReadSurat = true;
+            });
+        });
+
+        function showModal(imgSrc, textContent, onConfirm) {
+            if (currentScene !== "hbd_keko") return;
+            modalImage.src = imgSrc;
+            modalText.textContent = textContent;
+            currentActionCallback = onConfirm;
+            modalOverlay.classList.add('active');
+            startHeartAnimation(5000);
+        }
+
+        function startHeartAnimation(durationMs) {
+            if (heartInterval) clearInterval(heartInterval);
+            const hearts = ['❤️', '💖', '💕', '💗', '💓'];
+            const startTime = Date.now();
+
+            heartInterval = setInterval(() => {
+                if (Date.now() - startTime > durationMs || currentScene !== "hbd_keko") {
+                    clearInterval(heartInterval);
+                    return;
+                }
+
+                const heart = document.createElement('div');
+                heart.classList.add('floating-heart');
+                heart.textContent = hearts[Math.floor(Math.random() * hearts.length)];
+
+                const rect = modalCard.getBoundingClientRect();
+                const startX = rect.left + Math.random() * rect.width;
+                const startY = rect.top + rect.height - 20;
+
+                heart.style.left = `${startX}px`;
+                heart.style.top = `${startY}px`;
+                heart.style.setProperty('--rot', `${(Math.random() - 0.5) * 40}deg`);
+
+                document.body.appendChild(heart);
+                setTimeout(() => heart.remove(), 2000);
+            }, 150);
+        }
+
+        modalBtn.addEventListener('click', () => {
+            modalOverlay.classList.remove('active');
+            if (heartInterval) clearInterval(heartInterval);
+            if (currentActionCallback) {
+                currentActionCallback();
+                currentActionCallback = null;
+            }
+        });
+
+        function triggerToast(message) {
+            if (currentScene !== "hbd_keko") return;
+            toastAlert.textContent = message;
+            toastAlert.classList.add('show');
+            setTimeout(() => {
+                toastAlert.classList.remove('show');
+            }, 2000);
+        }
+
+        function createBurstEffect(clientX, clientY) {
+            for (let i = 0; i < 20; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('burst-particle');
+                
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 50 + Math.random() * 80;
+                const dx = `${Math.cos(angle) * speed}px`;
+                const dy = `${Math.sin(angle) * speed}px`;
+
+                particle.style.left = `${clientX}px`;
+                particle.style.top = `${clientY}px`;
+                particle.style.setProperty('--dx', dx);
+                particle.style.setProperty('--dy', dy);
+
+                document.body.appendChild(particle);
+                setTimeout(() => particle.remove(), 600);
+            }
+        }
+
         function initCatalog() {
             const songList = document.getElementById('songList');
             songList.innerHTML = '';
@@ -624,6 +949,8 @@
 
             let wasInHbdKeko = (currentScene === "hbd_keko");
             currentScene = "luar";
+            hideHbdKekoElements();
+
             player.x = wasInHbdKeko ? (finalHouseX - 50) : (houseDoorX + 30); 
             missionCompleted = true; 
 
@@ -640,6 +967,7 @@
         }
 
         initCatalog();
+        hideHbdKekoElements(); // Pastikan disembunyikan saat load awal
 
         function startLoveAnimation() {
             loveAnimation.active = true; loveAnimation.hearts = [];
@@ -771,6 +1099,7 @@
             if (player.x < padding) player.x = padding;
             
             if (currentScene === "luar") {
+                hideHbdKekoElements();
                 document.getElementById('exitBtn').style.display = "none";
                 if (!gateOpened && player.x >= gateWallX) { isTouchingGate = true; } else { isTouchingGate = false; }
                 if (!gateOpened && player.x > gateWallX) player.x = gateWallX;
@@ -842,10 +1171,12 @@
                 }
 
                 if (currentScene === "dalam_rumah") {
+                    hideHbdKekoElements();
                     if (player.x >= 130 && player.x <= 600) { isTouchingTV = true; } else { isTouchingTV = false; }
                     if (player.x >= 660 && player.x <= 790) { isTouchingRak = true; } else { isTouchingRak = false; }
                     if (player.x >= 1050 && player.x <= 1200) { isTouchingRakFoto = true; } else { isTouchingRakFoto = false; }
                 } else {
+                    showHbdKekoElements();
                     isTouchingTV = false; isTouchingRak = false; isTouchingRakFoto = false;
                 }
             }
@@ -888,16 +1219,15 @@
                 }
 
                 if (isTouchingFinalHouseDoor) {
-    // Geser ke kanan (+220) agar pas di atas pintu, dan turunkan ke (0.38)
-    let popupX = (finalHouseX + 168 - cameraX) * zoomLevel;
-    let popupY = yOffset + (drawHeight * 0.37);
+                    let popupX = (finalHouseX + 168 - cameraX) * zoomLevel;
+                    let popupY = yOffset + (drawHeight * 0.37);
 
-    if (isFinalHouseUnlockedWithKey) {
-        drawHelperTooltip("Masuk Final House (Ent)", popupX, popupY);
-    } else {
-        drawHelperTooltip("Masukkan Kunci 🔑", popupX, popupY);
-    }
-}
+                    if (isFinalHouseUnlockedWithKey) {
+                        drawHelperTooltip("Masuk Final House (Ent)", popupX, popupY);
+                    } else {
+                        drawHelperTooltip("Masukkan Kunci 🔑", popupX, popupY);
+                    }
+                }
                 
                 if (isTouchingClawMachineLuar) { 
                     if (keyClawActive || isFinalHouseUnlockedWithKey) {
@@ -987,8 +1317,6 @@
                 } else {
                     ctx.fillStyle = "#ffd1dc"; ctx.fillRect(0, 0, canvas.width, canvas.height);
                 }
-
-                // KARAKTER KUCING / PLAYER DISINJ DIHILANGKAN SESUAI PERMINTAAN
             }
 
             // RENDERING ANIMASI LOVE GLOBAL
@@ -1021,7 +1349,7 @@
             }
 
             // RENDERING ANIMASI HBD LOVE 10 DETIK
-            if (hbdLoveAnimation.active) {
+            if (hbdLoveAnimation.active && currentScene === "hbd_keko") {
                 const elapsedTime = (Date.now() - hbdLoveAnimation.startTime) / 1000;
                 if (elapsedTime <= 10) {
                     ctx.save();
@@ -1239,6 +1567,7 @@
                         playHbdSong();    
                         currentScene = "hbd_keko";
                         player.x = 230; player.y = 0;
+                        showHbdKekoElements();
                         triggerHbdLoveAnimation(); 
                     } else {
                         showCustomAlert("Pintu Final House terkunci! Seret (drag) item KUNCI (Key) ke area pintu ini terlebih dahulu!");
@@ -1693,27 +2022,26 @@
                 let currentMouseY = pos4;
 
                 if (currentScene === "luar") {
-                 if (itemNumber === 3) {
-    // Titik acuan kiri pintu
-    let screenFinalHouseX = ((finalHouseX - cameraX) * zoomLevel) + 110; 
-    let screenY = ((canvas.height * 0.8) - 50) - 80; 
+                    if (itemNumber === 3) {
+                        let screenFinalHouseX = ((finalHouseX - cameraX) * zoomLevel) + 110; 
+                        let screenY = ((canvas.height * 0.8) - 50) - 80; 
 
-    // Batas kiri tetap (-70), batas kanan di-set ekstrem sampai ujung kanan layar (window.innerWidth)
-    if (currentMouseX >= screenFinalHouseX - 70 && currentMouseX <= window.innerWidth &&
-        currentMouseY >= screenY - 200 && currentMouseY <= screenY + 200) {
-        
-        elmnt.style.display = 'none';
-        keyClawActive = false;
-        isFinalHouseUnlockedWithKey = true; 
-        
-        stopAllBgmMusic(); 
-        playHbdSong();    
-        currentScene = "hbd_keko";
-        player.x = 230; player.y = 0;
-        triggerHbdLoveAnimation(); 
-        return;
-    }
-}
+                        if (currentMouseX >= screenFinalHouseX - 70 && currentMouseX <= window.innerWidth &&
+                            currentMouseY >= screenY - 200 && currentMouseY <= screenY + 200) {
+                            
+                            elmnt.style.display = 'none';
+                            keyClawActive = false;
+                            isFinalHouseUnlockedWithKey = true; 
+                            
+                            stopAllBgmMusic(); 
+                            playHbdSong();    
+                            currentScene = "hbd_keko";
+                            player.x = 230; player.y = 0;
+                            showHbdKekoElements();
+                            triggerHbdLoveAnimation(); 
+                            return;
+                        }
+                    }
 
                     if (itemNumber === 1 || itemNumber === 2) {
                         let screenClawX = (clawMachineX - cameraX) * zoomLevel;
