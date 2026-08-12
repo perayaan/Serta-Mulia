@@ -68,11 +68,11 @@
 
         #songPanel {
             display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
-            width: 320px; background: white; border: 3px solid #db939a; padding: 15px; z-index: 150; 
+            width: 360px; background: white; border: 3px solid #db939a; padding: 15px; z-index: 150; 
             box-shadow: 4px 4px 0px rgba(0,0,0,0.2); font-family: inherit; max-height: 80vh; overflow-y: auto;
         }
-        .song-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 2px dashed #ffb3ba; padding-bottom: 8px; font-weight: bold; font-size: 14px; }
-        .play-btn { background: #ffb3ba; border: 2px solid #db939a; color: white; cursor: pointer; padding: 5px 12px; font-weight: bold; font-family: inherit; font-size: 12px; transition: 0.1s; }
+        .song-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 2px dashed #ffb3ba; padding-bottom: 8px; font-weight: bold; font-size: 12px; gap: 10px; }
+        .play-btn { background: #ffb3ba; border: 2px solid #db939a; color: white; cursor: pointer; padding: 5px 12px; font-weight: bold; font-family: inherit; font-size: 12px; transition: 0.1s; flex-shrink: 0; }
         .play-btn:active { transform: translate(1px, 1px); }
 
         /* MINI-GAME PUZZLE */
@@ -618,7 +618,7 @@
         const tvPhotos = [];
         for (let i = 1; i <= 10; i++) { 
             let img = new Image(); 
-            img.src = `foto ${i}.jpg`; 
+            img.src = `foto ${i}.png`; 
             tvPhotos.push(img); 
         }
 
@@ -671,13 +671,31 @@
         const photoboothTriggerX = 2680; 
         const finalHouseX = 3500;
 
-        // Audio
+        // Audio Configuration
         let tvOn = false;
         let isTouchingTV = false;
         let tvPhotoIndex = 0;
         let photoFrameCounter = 0;
         let currentSongId = 1;
-        const songFiles = ['foto kita blur.mp3', 'lagu 2.mp3', 'lagu 3.mp3', 'lagu 4.mp3', 'lagu 5.mp3', 'lagu 6.mp3'];
+
+        // BGM Files & Titles
+        const songFiles = [
+            'foto kita blur.mp3',
+            'A COUPLE MINUTES.mp3',
+            'AH.mp3',
+            'IT ISNT PERFECT BUT IT MIGHT BE.mp3',
+            'MAN I NEED.mp3',
+            'RAINDANCE.mp3'
+        ];
+
+        const songTitles = [
+            'Foto Kita Blur',
+            'A Couple Minutes',
+            'AH',
+            'It Isn\'t Perfect<br>But It Might Be',
+            'Man I Need',
+            'Raindance'
+        ];
 
         const loveAnimation = { active: false, hearts: [], frameCounter: 0, loopCount: 0, loopLimit: 2, heartAppearDelay: 15 };
 
@@ -895,11 +913,11 @@
         function initCatalog() {
             const songList = document.getElementById('songList');
             songList.innerHTML = '';
-            for(let i=1; i<=6; i++) {
+            for(let i=1; i<=songFiles.length; i++) {
                 let div = document.createElement('div'); 
                 div.className = 'song-item';
                 div.id = `song-item-${i}`;
-                div.innerHTML = `<span>Lagu ${i}</span><button class="play-btn" onclick="playSong(${i})">▶ PLAY</button>`;
+                div.innerHTML = `<span>${songTitles[i-1]}</span><button class="play-btn" onclick="playSong(${i})">▶ PLAY</button>`;
                 songList.appendChild(div);
             }
             updateCatalogUI();
@@ -925,17 +943,17 @@
         function playHbdSong() {
             stopAllBgmMusic();
             const hbdAudio = document.getElementById('hbdSongAudio');
-            hbdAudio.src = 'hbd_special_song.mp3';
+            hbdAudio.src = 'SERTA MULIA.mp3';
             hbdAudio.play().catch(e => console.log("Audio waiting interaction"));
         }
 
         function updateCatalogUI() {
-            for(let i=1; i<=6; i++) {
+            for(let i=1; i<=songFiles.length; i++) {
                 let el = document.getElementById(`song-item-${i}`);
                 if (el) {
                     el.style.color = (i === currentSongId) ? '#db939a' : '#b56b72';
                     let icon = (i === currentSongId && tvOn) ? ' 🎵' : '';
-                    el.innerHTML = `<span>Lagu ${i}${icon}</span><button class="play-btn" onclick="playSong(${i})">▶ PLAY</button>`;
+                    el.innerHTML = `<span style="max-width:200px; white-space:normal; line-height:1.2;">${songTitles[i-1]}${icon}</span><button class="play-btn" onclick="playSong(${i})">▶ PLAY</button>`;
                 }
             }
         }
