@@ -12,6 +12,61 @@
         /* CLASS PENTING UNTUK MENYEMBUNYIKAN ELEMEN HBD KEKO */
         .hidden { display: none !important; }
 
+        /* OVERLAY START SCREEN POP-UP (FULL DISPLAY + BLUR) */
+        #startOverlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-sizing: border-box;
+            padding: 20px;
+        }
+
+        .start-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            max-width: 90vw;
+            max-height: 90vh;
+        }
+
+        #startImg {
+            max-width: 80vw;
+            max-height: 65vh;
+            object-fit: contain;
+            image-rendering: pixelated;
+            filter: drop-shadow(0px 8px 16px rgba(0,0,0,0.3));
+        }
+
+        #startGameBtn {
+            margin-top: 25px;
+            background: #ffb3ba;
+            color: #ffffff;
+            border: 4px solid #db939a;
+            padding: 14px 40px;
+            font-family: inherit;
+            font-weight: 900;
+            font-size: 20px;
+            cursor: pointer;
+            text-align: center;
+            box-sizing: border-box;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+        #startGameBtn:hover { background: #ffc2c9; transform: scale(1.05); }
+        #startGameBtn:active { background: #e5a1a8; transform: translate(2px, 2px); box-shadow: 0px 0px 0px transparent; }
+
         /* POP-UP UTAMA: Windows Retro Pink/Pastel Pixel */
         #retroPopup {
             display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
@@ -355,6 +410,14 @@
 </head>
 <body>
 
+    <!-- OVERLAY POP-UP HBD START SCREEN DENGAN EFEK BACKGROUND BLUR -->
+    <div id="startOverlay">
+        <div class="start-container">
+            <img id="startImg" src="START.png" alt="Happy Birthday Start">
+            <button id="startGameBtn" onclick="startGame()">START GAME</button>
+        </div>
+    </div>
+
     <canvas id="gameCanvas"></canvas>
 
     <!-- ELEMEN INTERAKTIF KHUSUS HBD KEKO -->
@@ -574,6 +637,14 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
+        // State Game Started
+        let isGameStarted = false;
+
+        function startGame() {
+            isGameStarted = true;
+            document.getElementById('startOverlay').style.display = 'none';
+        }
+
         // Asset Original
         const imgAwan = new Image(); imgAwan.src = 'AWAN.png';
         const imgGunung = new Image(); imgGunung.src = 'GUNUNG.png';
@@ -618,7 +689,7 @@
         const tvPhotos = [];
         for (let i = 1; i <= 10; i++) { 
             let img = new Image(); 
-            img.src = `FOTO ${i}.png`; 
+            img.src = `foto ${i}.png`; 
             tvPhotos.push(img); 
         }
 
@@ -985,7 +1056,7 @@
         }
 
         initCatalog();
-        hideHbdKekoElements(); // Pastikan disembunyikan saat load awal
+        hideHbdKekoElements();
 
         function startLoveAnimation() {
             loveAnimation.active = true; loveAnimation.hearts = [];
@@ -1019,7 +1090,7 @@
         window.dispatchEvent(new Event('resize'));
 
         canvas.addEventListener('click', (e) => {
-            if (currentScene !== "luar" || gateOpened || isPopupActive || isPhotoboothActive) return;
+            if (!isGameStarted || currentScene !== "luar" || gateOpened || isPopupActive || isPhotoboothActive) return;
             const rect = canvas.getBoundingClientRect();
             const clickX = e.clientX - rect.left;
             const worldClickX = (clickX / zoomLevel) + cameraX;
@@ -1097,7 +1168,7 @@
 
         // --- GAME LOOP UTAMA ---
         function loop() {
-            if (!isPopupActive && !isPuzzleActive && !isPhotoActive && !isClawPopupActive && !isPhotoboothActive) {
+            if (isGameStarted && !isPopupActive && !isPuzzleActive && !isPhotoActive && !isClawPopupActive && !isPhotoboothActive) {
                 if (keys.left) { 
                     player.x -= player.speed; 
                     player.dir = 'left'; 
@@ -1111,10 +1182,12 @@
                 }
             }
             
-            player.vy += 0.8; 
-            player.y += player.vy;
-            if (player.y > 0) { player.y = 0; player.vy = 0; player.jumping = false; }
-            if (player.x < padding) player.x = padding;
+            if (isGameStarted) {
+                player.vy += 0.8; 
+                player.y += player.vy;
+                if (player.y > 0) { player.y = 0; player.vy = 0; player.jumping = false; }
+                if (player.x < padding) player.x = padding;
+            }
             
             if (currentScene === "luar") {
                 hideHbdKekoElements();
@@ -1156,7 +1229,7 @@
                 if (cameraX < 0) cameraX = 0;
                 if (cameraX > maxCameraX) cameraX = maxCameraX;
 
-                if (!isPopupActive && !isPuzzleActive && !isPhotoActive && !isClawPopupActive && !isPhotoboothActive) {
+                if (isGameStarted && !isPopupActive && !isPuzzleActive && !isPhotoActive && !isClawPopupActive && !isPhotoboothActive) {
                     if (npcChicken.dir === 'right') {
                         npcChicken.x += npcChicken.speed;
                         if (npcChicken.x >= npcChicken.endX) npcChicken.dir = 'left';
@@ -1229,14 +1302,14 @@
                 } else {
                     ctx.drawImage(imgGateTutup, -cameraX * zoomLevel, yOffset, drawWidth, drawHeight);
                     ctx.drawImage(imgSunflower, -cameraX * zoomLevel, yOffset, drawWidth, drawHeight);
-                    if (isTouchingGate) { drawHelperTooltip("open the gate (Ent)", (480 - cameraX) * zoomLevel, yOffset + (drawHeight * 0.53)); }
+                    if (isTouchingGate && isGameStarted) { drawHelperTooltip("open the gate (Ent)", (480 - cameraX) * zoomLevel, yOffset + (drawHeight * 0.53)); }
                 }
 
-                if (isTouchingHouseDoor) { 
+                if (isTouchingHouseDoor && isGameStarted) { 
                     drawHelperTooltip("enter room (Ent)", ((houseDoorX + 110) - cameraX) * zoomLevel, yOffset + (drawHeight * 0.42)); 
                 }
 
-                if (isTouchingFinalHouseDoor) {
+                if (isTouchingFinalHouseDoor && isGameStarted) {
                     let popupX = (finalHouseX + 168 - cameraX) * zoomLevel;
                     let popupY = yOffset + (drawHeight * 0.37);
 
@@ -1247,7 +1320,7 @@
                     }
                 }
                 
-                if (isTouchingClawMachineLuar) { 
+                if (isTouchingClawMachineLuar && isGameStarted) { 
                     if (keyClawActive || isFinalHouseUnlockedWithKey) {
                         drawHelperTooltip("mainkan mesin capit (Ent)", (clawMachineX - 30 - cameraX) * zoomLevel, yOffset + (drawHeight * 0.45));
                     } else {
@@ -1255,7 +1328,7 @@
                     }
                 }
 
-                if (isTouchingPhotoboothLuar) {
+                if (isTouchingPhotoboothLuar && isGameStarted) {
                     if (hasUnlockedPhotobooth) {
                         drawHelperTooltip("Masuk Photobooth (Ent)", (photoboothTriggerX - 10 - cameraX) * zoomLevel, yOffset + (drawHeight * 0.33));
                     } else {
@@ -1308,19 +1381,19 @@
                     }
                 }
 
-                if (isTouchingTV) {
+                if (isTouchingTV && isGameStarted) {
                     const tooltipBaseX = canvas.width * 0.295; const tooltipBaseY = canvas.height * 0.25;
                     drawHelperTooltip(tvOn ? "(O) Matikan TV" : "(O) Nyalakan TV", tooltipBaseX, tooltipBaseY);
                     drawHelperTooltip("(P) Pilih Lagu", tooltipBaseX, tooltipBaseY + 30);
                 }
 
                 ctx.drawImage(imgRakPuzzle, 0, 0, canvas.width, canvas.height);
-                if (isTouchingRak && !isPuzzleActive) {
+                if (isTouchingRak && !isPuzzleActive && isGameStarted) {
                     drawHelperTooltip("(K) Buka Puzzle", canvas.width * 0.565, canvas.height * 0.50);
                 }
 
                 ctx.drawImage(imgRakFoto, 0, 0, canvas.width, canvas.height);
-                if (isTouchingRakFoto && !isPhotoActive) {
+                if (isTouchingRakFoto && !isPhotoActive && isGameStarted) {
                     drawHelperTooltip("(F) Urutkan Foto", canvas.width * 0.900, canvas.height * 0.35);
                 }
 
@@ -1553,7 +1626,7 @@
 
         // KEYBOARD EVENT LISTENERS
         window.addEventListener('keydown', e => {
-            if (isPhotoboothActive) return;
+            if (!isGameStarted || isPhotoboothActive) return;
             
             if (e.key === 'ArrowLeft' || e.key === 'a') keys.left = true;
             if (e.key === 'ArrowRight' || e.key === 'd') keys.right = true;
